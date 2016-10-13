@@ -7,6 +7,7 @@ public class ConnectionEvent {
 
 	enum Cause
 	{
+		/**SchmorgUs*/
 		USER,
 		TIMEOUT
 	}
