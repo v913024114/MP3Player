@@ -1,6 +1,8 @@
 package com.mp3player.vdp;
 
 import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
@@ -24,6 +26,9 @@ public abstract class Distributed implements Serializable
 	}
 
 
+	public abstract Distributed resolveConflict(Distributed other);
+
+
 	void fireChangedExternally(DataChangeEvent e) {
 		for(Consumer<DataChangeEvent> l : changeListeners) l.accept(e);
 	}
@@ -44,4 +49,17 @@ public abstract class Distributed implements Serializable
 		return id;
 	}
 
+	void copyListenersFrom(Distributed other) {
+		changeListeners = new CopyOnWriteArrayList<>(other.changeListeners);
+	}
+
+	void copyNonTransientFieldsFrom(Distributed other) throws IllegalArgumentException, IllegalAccessException {
+		for(Field field : getClass().getFields()) {
+			if(!field.isAccessible()) field.setAccessible(true);
+			if(!Modifier.isTransient(field.getModifiers())) {
+				Object value = field.get(other);
+				field.set(this, value);
+			}
+		}
+	}
 }
