@@ -27,6 +27,13 @@ public class VDP {
 	}
 
 
+	/**
+	 * Connects to a virtual IP address and returns immediately.
+	 * If other peers are found at that address or later connect to it,
+	 * the onPeerConnected-listener is informed.
+	 * @param multicastAddress
+	 * @throws IOException
+	 */
 	public void connectToMulticastAddress(String multicastAddress) throws IOException {
 
 	}
@@ -57,11 +64,11 @@ public class VDP {
 	}
 
 	List<RemoteFile> getLocalRootFiles() {
-
+		return null;
 	}
 
 	RemoteFile getLocalFile(String path) {
-
+		return null;
 	}
 
 
@@ -80,11 +87,11 @@ public class VDP {
 	}
 
 	public Optional<Distributed> getData(String id) {
-
+		return null;
 	}
 
 	public List<Distributed> getAllData() {
-
+		return null;
 	}
 
 	public void saveAllData(File saveFile) {
@@ -104,15 +111,15 @@ public class VDP {
 	}
 
 	public List<Peer> getRemotePeers() {
-
+		return null;
 	}
 
 	public List<Peer> getAllPeers() {
-
+		return null;
 	}
 
 	public Peer getPeer(String id) {
-
+		return null;
 	}
 
 

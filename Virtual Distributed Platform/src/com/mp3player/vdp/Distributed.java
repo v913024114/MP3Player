@@ -43,6 +43,5 @@ public abstract class Distributed implements Serializable
 	public String getID() {
 		return id;
 	}
-	
-	public void 
+
 }
