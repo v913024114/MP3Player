@@ -103,10 +103,6 @@ public class VDP {
 
 	}
 
-	public void send(Peer peer, Serializable message) {
-
-	}
-
 	public Peer getLocalPeer() {
 		return localPeer;
 	}

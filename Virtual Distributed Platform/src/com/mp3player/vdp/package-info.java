@@ -13,7 +13,8 @@
  * network. This process is called <i>mounting</i>. All files mounted by one
  * peer through one of {@link com.mp3player.vdp.VDP}'s mount methods are seen as
  * root files. Directories implicitly mount all contained files and folders.
- * Other peers can then access these files through the corresponding instance of
+ * Other peers can then access these files as
+ * {@link com.mp3player.vdp.RemoteFile}s through the corresponding instance of
  * {@link com.mp3player.vdp.Peer}.
  * </p>
  * <p>
@@ -25,8 +26,10 @@
  * </p>
  * <p>
  * <b>Messages</b> can also be sent to a specific peer using
- * {@link VDP#send(Peer, java.io.Serializable)}.
+ * <code>Peer.send()</code> and received using
+ * <code>VDP.setOnMessageReceived()</code>.
  * </p>
+ *
  * @author API design: Philipp Holl
  */
 package com.mp3player.vdp;
