@@ -11,7 +11,6 @@ import java.util.function.Supplier;
 
 /**
  * Main class for setting up a virtual distributed platform.
- * @author Philipp Holl
  *
  */
 public class VDP {
@@ -21,18 +20,22 @@ public class VDP {
 	private Consumer<Distributed> onDataAdded, onDataRemoved;
 	private Consumer<Serializable> onMessageReceived;
 
-
 	public VDP() {
 		// TODO Auto-generated constructor stub
 	}
 
-
 	/**
-	 * Connects to a virtual IP address and returns immediately.
-	 * If other peers are found at that address or later connect to it,
-	 * the onPeerConnected-listener is informed.
+	 * Connects to a virtual IP address and returns immediately. If other peers
+	 * are found at that address or later connect to it, they are added to the
+	 * list of peers, see {@link #getAllPeers()} and the
+	 * onPeerConnected-listener is informed, see
+	 * {@link #setOnPeerConnected(Consumer)}.
+	 *
 	 * @param multicastAddress
+	 *            a multicast address (in the range 224.0.0.0 to 239.255.255.255
+	 *            for IPv4)
 	 * @throws IOException
+	 *             if the address cannot be connected to
 	 */
 	public void connectToMulticastAddress(String multicastAddress) throws IOException {
 
@@ -41,7 +44,6 @@ public class VDP {
 	public void connectToExternal(String address) throws IOException {
 
 	}
-
 
 	public void mountFile(File file) {
 
@@ -71,18 +73,17 @@ public class VDP {
 		return null;
 	}
 
-
 	public void putData(Distributed data) {
-		if(data.vdp != null) throw new IllegalArgumentException("data is already bound");
+		if (data.vdp != null)
+			throw new IllegalArgumentException("data is already bound");
 		data.vdp = this;
-
 
 	}
 
 	public void removeData(Distributed data) {
-		if(data.vdp != this) throw new IllegalArgumentException();
+		if (data.vdp != this)
+			throw new IllegalArgumentException();
 		data.vdp = null;
-
 
 	}
 
@@ -121,8 +122,6 @@ public class VDP {
 	public Peer getPeer(String id) {
 		return null;
 	}
-
-
 
 	void changed(Distributed distributed) {
 		// TODO Auto-generated method stub
@@ -168,6 +167,5 @@ public class VDP {
 	public void setOnMessageReceived(Consumer<Serializable> onMessageReceived) {
 		this.onMessageReceived = onMessageReceived;
 	}
-
 
 }
