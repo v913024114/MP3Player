@@ -32,7 +32,7 @@ public class LocalFile extends RemoteFile {
 	}
 
 	public static LocalFile createChild(LocalFile root, String relativePath) {
-		return new LocalFile(root.getClient(), root, relativePath, new File(root.localFile(), relativePath));
+		return new LocalFile(root.getPeer(), root, relativePath, new File(root.localFile(), relativePath));
 	}
 
 
@@ -81,11 +81,6 @@ public class LocalFile extends RemoteFile {
 	}
 
 	@Override
-	public boolean isFile() {
-		return file.isFile();
-	}
-
-	@Override
 	public boolean exists() throws IOException {
 		return file.exists();
 	}
@@ -122,6 +117,11 @@ public class LocalFile extends RemoteFile {
 			if(in != null) in.close();
 			if(out != null) out.close();
 		}
+	}
+
+	@Override
+	public InputStream openStream() throws IOException, UnsupportedOperationException {
+		return new FileInputStream(file);
 	}
 
 	@Override
