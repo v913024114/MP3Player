@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -20,22 +21,32 @@ public class VDP {
 	private Consumer<Distributed> onDataAdded, onDataRemoved;
 	private Consumer<Serializable> onMessageReceived;
 
+	/**
+	 * Creates a new virtual distributed platform. The created platform will
+	 * only know the local peer and does not actively connect to other peers or
+	 * receive connections from such until a <code>connect</code> method is
+	 * called.
+	 */
 	public VDP() {
 		// TODO Auto-generated constructor stub
+
 	}
 
 	/**
 	 * Connects to a virtual IP address and returns immediately. If other peers
 	 * are found at that address or later connect to it, they are added to the
-	 * list of peers, see {@link #getAllPeers()} and the
-	 * onPeerConnected-listener is informed, see
-	 * {@link #setOnPeerConnected(Consumer)}.
+	 * lists of peers, returned by {@link #getAllPeers()},
+	 * {@link #getRemotePeers()} and the <code>onPeerConnected</code>-listener
+	 * is informed.
 	 *
 	 * @param multicastAddress
 	 *            a multicast address (in the range 224.0.0.0 to 239.255.255.255
 	 *            for IPv4)
 	 * @throws IOException
 	 *             if the address cannot be connected to
+	 * @see #disconnectFromMulticastAddress(String)
+	 * @see #setOnPeerConnected(Consumer)
+	 * @see #setOnPeerDisconnected(Consumer)
 	 */
 	public void connectToMulticastAddress(String multicastAddress) throws IOException {
 
@@ -45,19 +56,58 @@ public class VDP {
 
 	}
 
-	public void mountFile(File file) {
+	public void disconnectFromMulticastAddress(String multicastAddress) throws IOException {
 
 	}
 
-	public void mountFile(String name, File file) {
+	public void disconnectFromExternal(String address) throws IOException {
 
 	}
 
-	public void mountVirtual(String name, long length, long lastModified, Supplier<InputStream> streamSupplier) {
+	public void disconnectAll(BiConsumer<String, IOException> errorHandler) {
 
 	}
 
-	public void unmountFile(File file) {
+	/**
+	 * Allows other peers to read the given file. The file will be available
+	 * using {@link Peer#getRootFiles()} or {@link Peer#getFile(String)} where
+	 * the path equals the returned filename. If the file is a directory, all
+	 * contained files and folders are also shared.
+	 * <p>
+	 * <i>Warning:</i> While mounted, files should not be modified.
+	 * </p>
+	 *
+	 * @return the mounted filename with which other peers can access the file.
+	 *         This may be different from the real file name if a file with that
+	 *         name has already been mounted before.
+	 * @param file
+	 *            file to share
+	 * @see #mountFile(String, File)
+	 * @see #unmountFile(String)
+	 */
+	public String mountFile(File file) {
+		return null;
+	}
+
+	/**
+	 * Mounts a file with a given name. The same file can be mounted with
+	 * different names. See {@link #mountFile(File)} for further details.
+	 *
+	 * @param name
+	 *            the name by which the file can be found
+	 * @param file
+	 *            the file to mount
+	 * @throws IllegalArgumentException
+	 *             if the given name is already in use
+	 * @see #mountFile(File)
+	 * @see #unmountFile(String)
+	 */
+	public void mountFile(String name, File file) throws IllegalArgumentException {
+
+	}
+
+	public void mountVirtual(String name, long length, long lastModified, Supplier<InputStream> streamSupplier)
+			throws IllegalArgumentException {
 
 	}
 
