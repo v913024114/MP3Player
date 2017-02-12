@@ -71,7 +71,7 @@ public class CircularSliderSkin extends SkinBase<CircularSlider> {
 
 		centralGroup = new Group();
 		centralGroup.setClip(centralClip = new Circle(1));
-		centralGroup.getTransforms().add(centralScale = new Scale(1, 1)); // TODO the scale makes the pane bigger than it should be
+		centralGroup.getTransforms().add(centralScale = new Scale(1, 1));
 		getChildren().add(centralGroup);
 
 
@@ -91,6 +91,7 @@ public class CircularSliderSkin extends SkinBase<CircularSlider> {
 		getChildren().add(styledBarBox);
 
 		// Thumb
+		// TODO thumb is not round when too big
 		thumb = new StackPane() {
             @Override
             public Object queryAccessibleAttribute(AccessibleAttribute attribute, Object... parameters) {
@@ -149,6 +150,8 @@ public class CircularSliderSkin extends SkinBase<CircularSlider> {
 		styledBarBox.backgroundProperty().addListener(e -> updateBarStyle());
 
 		getSkinnable().setOnMouseMoved(e -> updateMouseOver(e));
+		getSkinnable().setOnMouseDragged(e -> updateMouseOver(e));
+
 		getSkinnable().setOnMouseExited(e -> {
 			mouseTooltipAnimation = fadeTooltip(mouseTooltipFadeOutLength, 0, mouseTooltip, mouseTooltipAnimation);
 			thumb.setOpacity(0);
@@ -158,9 +161,11 @@ public class CircularSliderSkin extends SkinBase<CircularSlider> {
 			updateMouseOver(e);
 			barTooltipAnimation = fadeTooltip(barTooltipFadeInLength, 1, barTooltip, barTooltipAnimation);
 		});
+
 		getSkinnable().setOnMouseReleased(e -> {
 			if(isOnBar(e.getX(), e.getY())) {
 				getSkinnable().setValue(getValueAt(e.getX(), e.getY()));
+				showTooltipAtPos(barTooltip, getSkinnable().getValue());
 			}
 		});
 	}
@@ -171,7 +176,7 @@ public class CircularSliderSkin extends SkinBase<CircularSlider> {
 			barTooltipAnimation.stop();
 		}
 		if(targetOpacity > 0 && !barTooltip.isShowing()) {
-			showTooltipAt(barTooltip, getSkinnable().getValue());
+			showTooltipAtPos(barTooltip, getSkinnable().getValue());
 		}
 		barTooltipAnimation = new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(barTooltip.opacityProperty(), barTooltip.getOpacity())),
 				new KeyFrame(new Duration(duration), new KeyValue(barTooltip.opacityProperty(), targetOpacity)));
@@ -186,32 +191,36 @@ public class CircularSliderSkin extends SkinBase<CircularSlider> {
 
 
 	private void updateMouseOver(MouseEvent e) {
+		double angle = getAngle(e.getX(), e.getY());
 		double pos = getValueAt(e.getX(), e.getY());
 		boolean onBar = isOnBar(e.getX(), e.getY());
 
 		// update tooltip
 		if(onBar) {
 			mouseTooltip.setText(getLabelAt(pos));
-			showTooltipAt(mouseTooltip, pos);
+			showTooltipAtAngle(mouseTooltip, angle);
 			mouseTooltipAnimation = fadeTooltip(mouseTooltipFadeInLength, 1, mouseTooltip, mouseTooltipAnimation);
 		} else {
 			mouseTooltipAnimation = fadeTooltip(mouseTooltipFadeOutLength, 0, mouseTooltip, mouseTooltipAnimation);
 		}
 
 		// update thumb
-		Point2D thumbLoc = getLocation(pos, barRadius);
+		Point2D thumbLoc = getLocationFromAngle(angle, barRadius);
 		thumb.setLayoutX(thumbLoc.getX() - thumb.getWidth()/2);
 		thumb.setLayoutY(thumbLoc.getY() - thumb.getHeight()/2);
 		thumb.setOpacity(onBar ? 1 : 0.4);
 	}
 
-	private double getValueAt(double x, double y) {
+	public double getAngle(double x, double y) {
 		double dx = x - getSkinnable().getWidth()/2;
 		double dy = y - getSkinnable().getHeight()/2;
 		double angle = Math.atan2(dx, -dy);
 		if(angle < 0) angle += 2*Math.PI;
-		double pos = angle / (2*Math.PI) * (getSkinnable().getMax()-getSkinnable().getMin()) + getSkinnable().getMin();
-		return pos;
+		return angle;
+	}
+
+	private double getValueAt(double x, double y) {
+		return getAngle(x,y) / (2*Math.PI) * (getSkinnable().getMax()-getSkinnable().getMin()) + getSkinnable().getMin();
 	}
 
 	private String getLabelAt(double pos) {
@@ -224,15 +233,20 @@ public class CircularSliderSkin extends SkinBase<CircularSlider> {
 		return formatter;
 	}
 
-	private Point2D getLocation(double pos, double rad) {
-		double angle = 2*Math.PI * (pos-getSkinnable().getMin()) / (getSkinnable().getMax()-getSkinnable().getMin());
+	private Point2D getLocationFromAngle(double angle, double rad) {
 		return new Point2D(rad*Math.sin(angle)+getSkinnable().getWidth()/2, -rad*Math.cos(angle)+getSkinnable().getHeight()/2);
 	}
 
-	private void showTooltipAt(Tooltip tooltip, double pos) {
+	private void showTooltipAtPos(Tooltip tooltip, double pos) {
+		double angle = 2*Math.PI * (pos-getSkinnable().getMin()) / (getSkinnable().getMax() - getSkinnable().getMin());
+		if(Double.isNaN(angle)) angle = 0;
+		showTooltipAtAngle(tooltip, angle);
+	}
+
+	private void showTooltipAtAngle(Tooltip tooltip, double angle) {
 		double rad = barRadius + barWidth/2;
-		double relPos = (pos-getSkinnable().getMin()) / (getSkinnable().getMax() - getSkinnable().getMin());
-		showTooltipAt(tooltip, getLocation(pos, rad), relPos < 0.5, relPos > 0.25 && relPos < 0.75);
+		double relPos = angle / 2 / Math.PI;
+		showTooltipAt(tooltip, getLocationFromAngle(angle, rad), relPos < 0.5, relPos > 0.25 && relPos < 0.75);
 	}
 
 	private void showTooltipAt(Tooltip tooltip, Point2D point, boolean left, boolean top) {
