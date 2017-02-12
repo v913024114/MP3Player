@@ -1,4 +1,6 @@
 package com.mp3player.fx;
+import java.io.InputStream;
+
 import javafx.geometry.Bounds;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
@@ -6,11 +8,16 @@ import javafx.geometry.Pos;
 import javafx.geometry.VPos;
 import javafx.scene.Group;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBase;
 import javafx.scene.control.SkinBase;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
+import javafx.scene.text.Font;
 import javafx.util.converter.DoubleStringConverter;
 
 public class RoundPlayerSkin extends SkinBase<PlayerControl>
@@ -19,7 +26,8 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 
 	// Buttons
 	private Group buttonRoot;
-	private Button playButton, stopButton, prevButton, nextButton;
+	private ToggleButton playButton, repeatButton, shuffleButton;
+	private Button stopButton, prevButton, nextButton;
 	private double innerMargin = 2, outerMargin = 5;
 
 
@@ -46,6 +54,8 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 		});
 		getChildren().add(slider);
 
+		slider.maxProperty().bind(getSkinnable().durationProperty());
+
 		createButtons();
 	}
 
@@ -55,7 +65,8 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 		buttonPane.setPickOnBounds(false);
 		buttonRoot = new Group(buttonPane);
 		getChildren().add(buttonRoot);
-		buttonPane.setCenter(playButton = new Button("Play"));
+		buttonPane.setCenter(playButton = new ToggleButton(null, loadIcon("icons/Play_MouseOff.png", 32, 32)));
+		playButton.selectedProperty().bindBidirectional(getSkinnable().playingProperty());
 
 		BorderPane bottomButtonPane = new BorderPane();
 		bottomButtonPane.setPickOnBounds(false);
@@ -63,10 +74,15 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 		buttonPane.setBottom(bottomRoot);
 		BorderPane.setAlignment(bottomRoot, Pos.TOP_CENTER);
 
-		bottomButtonPane.setCenter(stopButton = new Button("Stop"));
-		bottomButtonPane.setLeft(prevButton = new Button("<<"));
+		bottomButtonPane.setCenter(stopButton = new Button(null, loadIcon("icons/Stop_MouseOff.png", 18, 18)));
+		bottomButtonPane.setLeft(prevButton = new Button(null, loadIcon("icons/Previous_MouseOff.png", 24, 24)));
 		BorderPane.setAlignment(prevButton, Pos.TOP_RIGHT);
-		bottomButtonPane.setRight(nextButton = new Button(">>"));
+		bottomButtonPane.setRight(nextButton = new Button(null, loadIcon("icons/Next_MouseOff.png", 24, 24)));
+
+		getChildren().add(repeatButton = new ToggleButton(null, loadIcon("icons/Repeat_MouseOff.png", 24, 24)));
+		getChildren().add(shuffleButton = new ToggleButton(null, loadIcon("icons/Shuffle_MouseOff.png", 24, 24)));
+		repeatButton.selectedProperty().bindBidirectional(getSkinnable().repeatProperty());
+		shuffleButton.selectedProperty().bindBidirectional(getSkinnable().shuffledProperty());
 
 		Insets buttonMargins = new Insets(innerMargin);
 		BorderPane.setMargin(playButton, buttonMargins);
@@ -91,7 +107,7 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 		setButtonShape(nextButton, Shape.intersect(region, new Rectangle(rad*splitH+inset, splitV*rad+inset, (1-splitH)*rad-inset, (1-splitV)*rad-inset)));
 	}
 
-	private static void setButtonShape(Button button, Shape shape) {
+	private static void setButtonShape(ButtonBase button, Shape shape) {
 		Bounds b = shape.getBoundsInLocal();
 		button.setShape(shape);
 		button.setMinSize(b.getWidth(), b.getHeight());
@@ -119,6 +135,29 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 		layoutButtons((barRadius-barWidth/2) - outerMargin);
     	layoutInArea(slider, contentX, contentY, contentWidth, contentHeight, 0, HPos.CENTER, VPos.CENTER);
     	layoutInArea(buttonRoot, contentX, contentY, contentWidth, contentHeight, 0, HPos.CENTER, VPos.CENTER);
+
+    	double inset = 10;
+    	layoutInArea(repeatButton, contentX+inset, contentY+inset, contentWidth-2*inset, contentHeight-2*inset, 0, HPos.LEFT, VPos.BOTTOM);
+    	layoutInArea(shuffleButton, contentX+inset, contentY+inset, contentWidth-2*inset, contentHeight-2*inset, 0, HPos.RIGHT, VPos.BOTTOM);
     }
+
+
+    private static ImageView loadIcon(String filename, double width, double height) {
+		return loadImage(RoundPlayerSkin.class.getResourceAsStream(filename), width, height);
+	}
+
+    private static ImageView loadImage(InputStream in, double width, double height) {
+		if(in == null) return null;
+		try {
+			ImageView iv = new ImageView(new Image(in, width*dpiFactor(), height*dpiFactor(), true, true));
+			return iv;
+		}catch(Exception exc) {
+			return null;
+		}
+	}
+
+    private static double dpiFactor() {
+	    return Font.getDefault().getSize() / 12.0;
+	}
 
 }
