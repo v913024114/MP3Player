@@ -306,9 +306,10 @@ public class CircularSliderSkin extends SkinBase<CircularSlider> {
 
 		for(double pos = Math.ceil(min / minorUnit) * minorUnit; pos < max; pos += minorUnit) {
 			boolean major = isInt(pos/majorUnit, 1e-6);
+			double preTransformLength = (major ? getSkinnable().getTickLength() : getSkinnable().getMinorTickLength());
 			TimeTick tick = new TimeTick(pos,
 					major,
-					(major ? getSkinnable().getTickLength() : getSkinnable().getMinorTickLength()) * 0.006,
+					preTransformLength * preTransformLength * 0.001,
 					major ? "axis-tick-mark" : "axis-minor-tick-mark");
 			tick.fitBounds(barWidth/barRadius);
 			ticks.add(tick);
