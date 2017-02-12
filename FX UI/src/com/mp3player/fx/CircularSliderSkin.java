@@ -30,6 +30,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.transform.Scale;
+import javafx.stage.PopupWindow.AnchorLocation;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import javafx.util.converter.DoubleStringConverter;
@@ -227,14 +228,19 @@ public class CircularSliderSkin extends SkinBase<CircularSlider> {
 	}
 
 	private void showTooltipAt(Tooltip tooltip, double pos) {
-		double rad = barRadius + barWidth/2 + 30;
-		showTooltipAt(tooltip, getLocation(pos, rad));
+		double rad = barRadius + barWidth/2;
+		double relPos = (pos-getSkinnable().getMin()) / (getSkinnable().getMax() - getSkinnable().getMin());
+		showTooltipAt(tooltip, getLocation(pos, rad), relPos < 0.5, relPos > 0.25 && relPos < 0.75);
 	}
 
-	private void showTooltipAt(Tooltip tooltip, Point2D point) {
+	private void showTooltipAt(Tooltip tooltip, Point2D point, boolean left, boolean top) {
 		CircularSlider control = getSkinnable();
-		tooltip.setAnchorX(point.getX() + control.getScene().getX() + control.getScene().getWindow().getX() - tooltip.getWidth()/2);
-		tooltip.setAnchorY(point.getY() + control.getScene().getY() + control.getScene().getWindow().getY() - tooltip.getHeight()/2);
+		point = control.localToScreen(point);
+		tooltip.setAnchorLocation(left ?
+			(top ? AnchorLocation.WINDOW_TOP_LEFT : AnchorLocation.WINDOW_BOTTOM_LEFT) :
+			(top ? AnchorLocation.WINDOW_TOP_RIGHT : AnchorLocation.WINDOW_BOTTOM_RIGHT));
+		tooltip.setAnchorX(point.getX());
+		tooltip.setAnchorY(point.getY());
 		if(!tooltip.isShowing()) {
 			tooltip.show(getSkinnable().getScene().getWindow());
 		}
