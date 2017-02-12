@@ -38,6 +38,7 @@ import javafx.util.converter.DoubleStringConverter;
 public class CircularSliderSkin extends SkinBase<CircularSlider> {
 	private Shape foregroundMask; // invisible, but throws shadow
 	private DropShadow shadow;
+	private Circle centralClip;
 
 	private double barRadius, barWidth; // effective values, depend on layout size
 
@@ -69,7 +70,8 @@ public class CircularSliderSkin extends SkinBase<CircularSlider> {
 		shadow.setColor(new Color(0, 0, 0, 0.6));
 
 		centralGroup = new Group();
-		centralGroup.getTransforms().add(centralScale = new Scale(1, 1));
+		centralGroup.setClip(centralClip = new Circle(1));
+		centralGroup.getTransforms().add(centralScale = new Scale(1, 1)); // TODO the scale makes the pane bigger than it should be
 		getChildren().add(centralGroup);
 
 
@@ -110,11 +112,11 @@ public class CircularSliderSkin extends SkinBase<CircularSlider> {
 
 		// Value tooltips
 		mouseTooltip = new Tooltip();
-		mouseTooltip.setAutoHide(true);
+//		mouseTooltip.setAutoHide(true);
 		mouseTooltip.setOpacity(0);
 
 		barTooltip = new Tooltip();
-		barTooltip.setAutoHide(true);
+//		barTooltip.setAutoHide(true);
 		barTooltip.setOpacity(0);
 		barTooltip.textProperty().bindBidirectional(control.valueProperty(), new StringConverter<Number>() {
 
@@ -396,6 +398,8 @@ public class CircularSliderSkin extends SkinBase<CircularSlider> {
             double contentWidth, double contentHeight) {
     	barRadius = Math.min(contentWidth, contentHeight) * getSkinnable().getDiameter() / 2;
     	barWidth = Math.min(contentWidth, contentHeight) * getSkinnable().getThickness();
+    	centralClip.setRadius(1+barWidth/2/barRadius);
+
     	recalculateShapes(contentWidth, contentHeight);
     	layoutInArea(foregroundMask, contentX, contentY, contentWidth, contentHeight, 0, HPos.CENTER, VPos.CENTER);
     	centralGroup.setTranslateX(contentWidth/2);
