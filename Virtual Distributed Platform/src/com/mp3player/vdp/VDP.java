@@ -4,7 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -20,6 +23,8 @@ public class VDP {
 	private Consumer<ConnectionEvent> onPeerConnected, onPeerDisconnected;
 	private Consumer<Distributed> onDataAdded, onDataRemoved;
 	private Consumer<Serializable> onMessageReceived;
+
+	private Map<String, Distributed> localData = new HashMap<>();
 
 	/**
 	 * Creates a new virtual distributed platform. The created platform will
@@ -128,6 +133,7 @@ public class VDP {
 			throw new IllegalArgumentException("data is already bound");
 		data.vdp = this;
 
+		localData.put(data.getID(), data);
 	}
 
 	public void removeData(Distributed data) {
@@ -138,11 +144,13 @@ public class VDP {
 	}
 
 	public Optional<Distributed> getData(String id) {
-		return null;
+		// TODO stub implementation
+		return Optional.ofNullable(localData.get(id));
 	}
 
-	public List<Distributed> getAllData() {
-		return null;
+	public Collection<Distributed> getAllData() {
+		// TODO stub implementation
+		return localData.values();
 	}
 
 	public void saveAllData(File saveFile) {
