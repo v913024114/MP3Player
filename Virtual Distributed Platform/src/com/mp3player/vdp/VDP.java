@@ -13,12 +13,14 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import com.mp3player.vdp.internal.LocalPeer;
+
 /**
  * Main class for setting up a virtual distributed platform.
  *
  */
 public class VDP {
-	private Peer localPeer;
+	private LocalPeer localPeer;
 
 	private Consumer<ConnectionEvent> onPeerConnected, onPeerDisconnected;
 	private Consumer<Distributed> onDataAdded, onDataRemoved;
@@ -33,8 +35,7 @@ public class VDP {
 	 * called.
 	 */
 	public VDP() {
-		// TODO Auto-generated constructor stub
-
+		localPeer = new LocalPeer();
 	}
 
 	/**
@@ -90,8 +91,8 @@ public class VDP {
 	 * @see #mountFile(String, File)
 	 * @see #unmountFile(String)
 	 */
-	public String mountFile(File file) {
-		return null;
+	public RemoteFile mountFile(File file) {
+		return localPeer.mount(file);
 	}
 
 	/**
@@ -102,30 +103,23 @@ public class VDP {
 	 *            the name by which the file can be found
 	 * @param file
 	 *            the file to mount
+	 * @return the mounted file
 	 * @throws IllegalArgumentException
 	 *             if the given name is already in use
 	 * @see #mountFile(File)
 	 * @see #unmountFile(String)
 	 */
-	public void mountFile(String name, File file) throws IllegalArgumentException {
-
+	public RemoteFile mountFile(String name, File file) throws IllegalArgumentException {
+		return localPeer.mount(name, file);
 	}
 
-	public void mountVirtual(String name, long length, long lastModified, Supplier<InputStream> streamSupplier)
+	public RemoteFile mountVirtual(String name, long length, long lastModified, Supplier<InputStream> streamSupplier)
 			throws IllegalArgumentException {
-
+		return null;
 	}
 
 	public void unmountFile(String name) {
 
-	}
-
-	List<RemoteFile> getLocalRootFiles() {
-		return null;
-	}
-
-	RemoteFile getLocalFile(String path) {
-		return null;
 	}
 
 	public void putData(Distributed data) {
@@ -151,7 +145,7 @@ public class VDP {
 	@SuppressWarnings("unchecked")
 	public <T extends Distributed> T getOrAddData(T addIfNotPresent) {
 		Optional<Distributed> p = getData(addIfNotPresent.getID());
-		if(p.isPresent()) {
+		if (p.isPresent()) {
 			return (T) p.get();
 		} else {
 			putData(addIfNotPresent);
@@ -185,12 +179,14 @@ public class VDP {
 	}
 
 	public Peer getPeer(String id) {
+		if(localPeer.getID().equals(id)) return localPeer;
+
 		return null;
 	}
 
 	void changed(Distributed distributed) {
-		// TODO Auto-generated method stub
-
+		DataChangeEvent e = new DataChangeEvent(localPeer, localPeer, System.currentTimeMillis(), System.currentTimeMillis());
+		distributed._fireChanged(e);
 	}
 
 	public Consumer<ConnectionEvent> getOnPeerConnected() {

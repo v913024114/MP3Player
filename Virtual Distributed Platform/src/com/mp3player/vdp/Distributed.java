@@ -12,7 +12,7 @@ import java.util.function.Consumer;
  * <p>
  * Each distributed object has a unique ID which must be provided in the
  * constructor. If multiple objects with the same ID are detected
- * {@link #resolveConflict(Distributed)} is called to determine which one will
+ * {@link #resolveConflict(Conflict)} is called to determine which one will
  * be kept. The other instance is then discarded.
  * </p>
  * <p>
@@ -75,7 +75,7 @@ public abstract class Distributed implements Serializable {
 	 */
 	public abstract Distributed resolveConflict(Conflict conflict);
 
-	void fireChangedExternally(DataChangeEvent e) {
+	void _fireChanged(DataChangeEvent e) {
 		for (Consumer<DataChangeEvent> l : changeListeners)
 			l.accept(e);
 	}
@@ -91,6 +91,11 @@ public abstract class Distributed implements Serializable {
 	protected void fireChangedLocally() {
 		if (vdp != null)
 			vdp.changed(this);
+		else {
+			DataChangeEvent e = new DataChangeEvent(null, null, System.currentTimeMillis(), System.currentTimeMillis());
+			for (Consumer<DataChangeEvent> l : changeListeners)
+				l.accept(e);
+		}
 	}
 
 	/**
