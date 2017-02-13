@@ -148,6 +148,17 @@ public class VDP {
 		return Optional.ofNullable(localData.get(id));
 	}
 
+	@SuppressWarnings("unchecked")
+	public <T extends Distributed> T getOrAddData(T addIfNotPresent) {
+		Optional<Distributed> p = getData(addIfNotPresent.getID());
+		if(p.isPresent()) {
+			return (T) p.get();
+		} else {
+			putData(addIfNotPresent);
+			return addIfNotPresent;
+		}
+	}
+
 	public Collection<Distributed> getAllData() {
 		// TODO stub implementation
 		return localData.values();

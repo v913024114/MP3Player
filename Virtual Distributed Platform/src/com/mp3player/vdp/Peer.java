@@ -94,4 +94,13 @@ public interface Peer {
 	 */
 	String getAddress();
 
+	/**
+	 * Returns a unique ID which serves to identify this peer. This ID can be
+	 * used in {@link VDP#getPeer(String)} to reference a specific
+	 * <code>Peer</code>.
+	 *
+	 * @return the unique ID of this peer
+	 */
+	String getID();
+
 }
