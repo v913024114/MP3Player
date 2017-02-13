@@ -62,18 +62,18 @@ public abstract class Distributed implements Serializable {
 	}
 
 	/**
-	 * Called when two objects with the same ID are detected. A conflict can
-	 * arise when two peers connect which both have a shared object with the
-	 * same ID. This method then resolves the conflict by providing the object
-	 * to keep.
+	 * Called on the local copy when two objects with the same ID are detected.
+	 * A conflict can arise when two peers connect which both have a shared
+	 * object with the same ID. This method then resolves the conflict by
+	 * providing the object to keep.
 	 *
-	 * @param other
-	 *            the other object
+	 * @param conflict
+	 *            detailed information about the conflict
 	 * @return the object to keep with this ID. This can be <code>this</code>,
 	 *         <code>other</code> or a newly created object. All other objects
 	 *         are discarded.
 	 */
-	public abstract Distributed resolveConflict(Distributed other);
+	public abstract Distributed resolveConflict(Conflict conflict);
 
 	void fireChangedExternally(DataChangeEvent e) {
 		for (Consumer<DataChangeEvent> l : changeListeners)
