@@ -20,6 +20,7 @@ import javafx.scene.effect.DropShadow;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -56,7 +57,7 @@ public class CircularSliderSkin extends SkinBase<CircularSlider> {
     private Region styledBarBox;
     private Path bar, oldBar;
     private FadeTransition oldBarFade;
-    private StackPane thumb;
+    private StackPane cssThumb, thumb;
     private double filledAngle = Double.NaN;
     private boolean onBar; // mouse pressed on bar or dragged from bar
 
@@ -104,7 +105,19 @@ public class CircularSliderSkin extends SkinBase<CircularSlider> {
         getChildren().add(styledBarBox);
 
         // Thumb
-        // TODO thumb is not round when too big
+        cssThumb = new StackPane() {
+            @Override
+            public Object queryAccessibleAttribute(AccessibleAttribute attribute, Object... parameters) {
+                switch (attribute) {
+                    case VALUE: return getSkinnable().getValue();
+                    default: return super.queryAccessibleAttribute(attribute, parameters);
+        } } };
+        cssThumb.setVisible(false);
+        cssThumb.setMouseTransparent(true);
+        cssThumb.setManaged(false);
+        cssThumb.getStyleClass().setAll("thumb");
+        getChildren().add(cssThumb);
+
         thumb = new StackPane() {
             @Override
             public Object queryAccessibleAttribute(AccessibleAttribute attribute, Object... parameters) {
@@ -118,9 +131,6 @@ public class CircularSliderSkin extends SkinBase<CircularSlider> {
         thumb.setOpacity(0);
         thumb.getStyleClass().setAll("thumb");
         thumb.setAccessibleRole(AccessibleRole.THUMB);
-//        thumb.resize(30, 30);
-        thumb.setLayoutX(100);
-        thumb.setLayoutY(100);
         getChildren().add(thumb);
 
 
@@ -409,6 +419,15 @@ public class CircularSliderSkin extends SkinBase<CircularSlider> {
 
         // Ticks
         updateTicks();
+
+        // Thumb
+        if(cssThumb.getBackground() != null) {
+        	BackgroundFill[] fills = cssThumb.getBackground().getFills().stream().map(f -> {
+        		return new BackgroundFill(f.getFill(), new CornerRadii(barWidth), f.getInsets());
+        	}).toArray(s -> new BackgroundFill[s]);
+
+        	thumb.setBackground(new Background(fills));
+        }
     }
 
     private Shape arcMask() {
