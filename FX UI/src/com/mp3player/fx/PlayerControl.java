@@ -87,7 +87,7 @@ public class PlayerControl extends Control {
     public final BooleanProperty shuffledProperty() { return shuffled; }
 
     /** true if minor tick marks should be displayed */
-    private BooleanProperty playing = new BooleanPropertyBase(true) {
+    private BooleanProperty playing = new BooleanPropertyBase(false) {
         @Override
         public Object getBean() {
             return PlayerControl.this;

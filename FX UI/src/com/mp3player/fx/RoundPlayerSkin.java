@@ -20,6 +20,7 @@ import javafx.scene.shape.Shape;
 import javafx.scene.text.Font;
 import javafx.util.converter.DoubleStringConverter;
 
+// TODO implement indeterminate (ProgressBar)
 public class RoundPlayerSkin extends SkinBase<PlayerControl>
 {
 	private CircularSlider slider;
@@ -55,6 +56,7 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 		getChildren().add(slider);
 
 		slider.maxProperty().bind(getSkinnable().durationProperty());
+		slider.valueProperty().bindBidirectional(getSkinnable().positionProperty());
 
 		createButtons();
 	}

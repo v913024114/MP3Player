@@ -33,7 +33,7 @@ public class TimeTick {
 
 	public void fitBounds(double relativeArcWidth) {
 		double sin2 = Math.sin(angleSpan / 2);
-		double cos2 = Math.cos(angleSpan);
+		double cos2 = Math.cos(angleSpan / 2);
 
 		arc.setStrokeWidth(relativeArcWidth);
 		arc.getElements().clear();
