@@ -11,6 +11,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBase;
 import javafx.scene.control.SkinBase;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
@@ -38,17 +39,18 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 		slider = new CircularSlider();
 		slider.setLabelFormatter(new DoubleStringConverter() {
 			@Override
-			public String toString(Double time) {
+			public String toString(Double timeExact) {
+				int time = (int) Math.round(timeExact);
 				if(time < 60) {
-					return (int) Math.round(time) + " s";
+					return time + " s";
 				} else if(time < 60*60){
-					int min = (int) (time / 60);
-					int sec = (int) Math.round(time - min*60);
+					int min = time / 60;
+					int sec = time - min*60;
 					return String.format("%d:%02d", min, sec);
 				} else {
-					int hrs = (int) (time / 60 / 60);
-					int min = (int) ((time - hrs*60) / 60);
-					int sec = (int) Math.round((time - hrs*60*60 - min*60));
+					int hrs = time / 60 / 60;
+					int min = (time - hrs*60) / 60;
+					int sec = time - hrs*60*60 - min*60;
 					return String.format("%d:%02d:%02d", hrs, min, sec);
 				}
 			}
@@ -96,6 +98,13 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 		stopButton.setPickOnBounds(false);
 		prevButton.setPickOnBounds(false);
 		nextButton.setPickOnBounds(false);
+
+		playButton.setTooltip(new Tooltip("Play / Pause"));
+		stopButton.setTooltip(new Tooltip("Stop"));
+		prevButton.setTooltip(new Tooltip("Previous song"));
+		nextButton.setTooltip(new Tooltip("Next song"));
+		shuffleButton.setTooltip(new Tooltip("Shuffled playlist"));
+		repeatButton.setTooltip(new Tooltip("Repeat playlist"));
 	}
 
 	private void layoutButtons(double rad) {

@@ -8,7 +8,7 @@ import java.util.ResourceBundle;
 import com.aquafx_project.AquaFx;
 import com.mp3player.fx.FileDropOverlay;
 import com.mp3player.fx.PlayerControl;
-import com.sun.media.jfxmedia.events.PlayerStateEvent.PlayerState;
+import com.mp3player.vdp.RemoteFile;
 
 import javafx.application.Application;
 import javafx.event.ActionEvent;
@@ -18,7 +18,6 @@ import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.Slider;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -35,26 +34,31 @@ public class PlayerWindow implements Initializable {
 
 	private PlayerControl control;
 
-	private PlayerStatus status;
+	private PlayerStatusWrapper statw;
 
 
 	public PlayerWindow(PlayerStatus status, Stage stage) throws IOException {
 		this.stage = stage;
-		this.status = status;
+		statw = new PlayerStatusWrapper(status);
 
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("mp3player.fxml"));
 		loader.setController(this);
 		BorderPane root = loader.load();
 
 		control = new PlayerControl();
-		control.setDuration(60*3.6);
+		control.durationProperty().bind(statw.durationProperty());
+		control.positionProperty().bindBidirectional(statw.positionProperty());
+		control.playingProperty().bindBidirectional(statw.playingProperty());
 		root.setCenter(control);
 
 		FileDropOverlay overlay = new FileDropOverlay(root);
 		overlay.setActionGenerator(files -> {
 			ToggleButton button = new ToggleButton("Play");
 			button.setOnAction(e -> {
-				currentSongMenu.setText(files.get(0).getName());
+				RemoteFile remoteFile = statw.getStatus().getVdp().mountFile(files.get(0));
+				String mediaID = status.getPlaylist().add(remoteFile);
+				status.getTarget().setTargetMedia(mediaID);
+				status.getTarget().setTargetPlaying(true);
 			});
 			return Arrays.asList(button);
 		});
@@ -64,7 +68,6 @@ public class PlayerWindow implements Initializable {
 
 		stage.setTitle("MX Player");
 		stage.getIcons().add(new Image(getClass().getResource("window-icon.png").toExternalForm()));
-		stage.show();
 	}
 
 	@FXML
@@ -83,6 +86,7 @@ public class PlayerWindow implements Initializable {
 		settingsMenu.setText(null);
 		settingsMenu.setGraphic(loadIcon("settings.png", 20));
 		currentSongMenu.setGraphic(loadIcon("file.png", 20));
+//		currentSongMenu.textProperty().bind(statw.mediaNameProperty()); TODO
 	}
 
 
@@ -95,4 +99,8 @@ public class PlayerWindow implements Initializable {
     private static double dpiFactor() {
 	    return Font.getDefault().getSize() / 12.0;
 	}
+
+    public void show() {
+		stage.show();
+    }
 }
