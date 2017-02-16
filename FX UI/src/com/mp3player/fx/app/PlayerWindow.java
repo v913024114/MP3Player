@@ -6,6 +6,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
 import com.aquafx_project.AquaFx;
 import com.mp3player.fx.FileDropOverlay;
@@ -72,34 +73,42 @@ public class PlayerWindow implements Initializable {
 
 		boolean cold = status.getPlaylist().isEmpty();
 
-		if(cold && files.size() == 1) {
-			ToggleButton playSingle = new ToggleButton("Play");
-			playSingle.setOnAction(e -> {
-				RemoteFile remoteFile = properties.getStatus().getVdp().mountFile(files.get(0));
-				String mediaID = status.getPlaylist().add(remoteFile);
-				status.getTarget().setTargetMedia(mediaID);
-				status.getTarget().setTargetPlaying(true);
-			});
-			result.add(playSingle);
+		// Play / New Playlist
+		ToggleButton play = new ToggleButton("Play", loadIcon("../icons/Play_MouseOn.png", 32));
+		play.setOnAction(e -> play(files));
+		result.add(play);
 
+		// Play Folder
+		if(files.size() == 1) {
 			List<File> allAudioFiles = AudioFiles.allAudioFilesIn(files.get(0).getParentFile());
 			if(allAudioFiles.size() > 1) {
-				ToggleButton playFolder = new ToggleButton("Play folder");
-				playFolder.setOnAction(e -> {
-					RemoteFile remoteFile = properties.getStatus().getVdp().mountFile(files.get(0));
-					String mediaID = status.getPlaylist().add(remoteFile);
-					status.getTarget().setTargetMedia(mediaID);
-					status.getTarget().setTargetPlaying(true);
-				});
+				ToggleButton playFolder = new ToggleButton("Play folder", loadIcon("../icons/Shuffle_MouseOn.png", 32));
+				playFolder.setOnAction(e -> play(AudioFiles.allAudioFilesIn(files.get(0).getParentFile())));
 				result.add(playFolder);
-
 			}
 		}
 
-//		if(!cold)
+		// Add to Playlist
+		if(!cold) {
+			ToggleButton append = new ToggleButton("Add to playlist", loadIcon("../icons/Append_MouseOn.png", 32));
+			append.setOnAction(e -> {
+				List<RemoteFile> remoteFiles = files.stream().map(file -> status.getVdp().mountFile(file)).collect(Collectors.toList());
+				String mediaID = status.getPlaylist().addAll(remoteFiles).get(0);
+				if(status.getPlayback().getCurrentMedia() == null) {
+					status.getTarget().setTargetMedia(mediaID, true);
+				}
+			});
+			result.add(append);
+		}
 
 
 		return result;
+	}
+
+	private void play(List<File> localFiles) {
+		List<RemoteFile> remoteFiles = localFiles.stream().map(file -> status.getVdp().mountFile(file)).collect(Collectors.toList());
+		String mediaID = status.getPlaylist().setAll(remoteFiles).get(0);
+		status.getTarget().setTargetMedia(mediaID, true);
 	}
 
 	@FXML

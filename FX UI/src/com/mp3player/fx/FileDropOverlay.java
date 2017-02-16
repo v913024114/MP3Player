@@ -127,7 +127,15 @@ public class FileDropOverlay {
 
 		buttons.clear();
 		toggleGroup.getToggles().clear();
-		buttons.addAll(actionGenerator.apply(new ArrayList<File>(files)));
+
+		List<ToggleButton> choices;
+		try {
+			choices = actionGenerator.apply(new ArrayList<File>(files));
+		} catch(Exception exc) {
+			exc.printStackTrace();
+			return;
+		}
+		buttons.addAll(choices);
 		buttons.forEach(b -> toggleGroup.getToggles().add(b));
 
 		Pane grid = layout(buttons, region);

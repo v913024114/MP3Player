@@ -39,8 +39,11 @@ public class PlayerTarget extends Distributed {
 		return targetMedia;
 	}
 
-	public void setTargetMedia(String targetMedia) {
+	public void setTargetMedia(String targetMedia, boolean startPlayingImmediately) {
 		this.targetMedia = targetMedia;
+		if(startPlayingImmediately) {
+			targetPlaying = true;
+		}
 		fireChangedLocally();
 	}
 

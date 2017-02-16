@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.mp3player.vdp.Conflict;
 import com.mp3player.vdp.Distributed;
@@ -52,16 +53,15 @@ public class Playlist extends Distributed {
 	}
 
 
-	public void set(List<RemoteFile> files) {
+	public List<String> setAll(List<RemoteFile> files) {
 		_clear();
-		addAll(files);
+		return addAll(files);
 	}
 
-	public void addAll(List<RemoteFile> files) {
-		for(RemoteFile file : files) {
-			_add(file);
-		}
+	public List<String> addAll(List<RemoteFile> files) {
+		List<String> ids = files.stream().map(file -> _add(file)).collect(Collectors.toList());
 		fireChangedLocally();
+		return ids;
 	}
 
 	private String _add(RemoteFile file) {

@@ -462,7 +462,7 @@ public class CircularSliderSkin extends SkinBase<CircularSlider> {
     @Override
     protected void layoutChildren(double contentX, double contentY,
             double contentWidth, double contentHeight) {
-        barRadius = Math.min(contentWidth, contentHeight) * getSkinnable().getDiameter() / 2;
+        barRadius = Math.max(0, Math.min(contentWidth, contentHeight) * getSkinnable().getDiameter() / 2);
         barWidth = Math.min(contentWidth, contentHeight) * getSkinnable().getThickness();
         centralClip.setRadius(1+barWidth/2/barRadius);
 
