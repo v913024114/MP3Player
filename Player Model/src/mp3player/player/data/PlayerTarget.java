@@ -17,7 +17,7 @@ public class PlayerTarget extends Distributed {
 
 
 	public PlayerTarget() {
-		super(VDP_ID);
+		super(VDP_ID, true, false);
 	}
 
 	@Override

@@ -21,7 +21,7 @@ public class Playlist extends Distributed {
 
 
 	public Playlist() {
-		super(VDP_ID);
+		super(VDP_ID, true, false);
 	}
 
 	@Override
@@ -87,6 +87,10 @@ public class Playlist extends Distributed {
 	public void clear() {
 		_clear();
 		fireChangedLocally();
+	}
+
+	public boolean isEmpty() {
+		return idList.isEmpty();
 	}
 
 }

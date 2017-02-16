@@ -29,7 +29,7 @@ public class PlaybackStatus extends Distributed {
 
 
 	public PlaybackStatus() {
-		super(VDP_ID);
+		super(VDP_ID, false, false);
 		supportedFormats = new ArrayList<>(0);
 	}
 
