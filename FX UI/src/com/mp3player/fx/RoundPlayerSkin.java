@@ -35,7 +35,12 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 
 	public RoundPlayerSkin(PlayerControl control) {
 		super(control);
+		createSlider();
+		createButtons();
+	}
 
+
+	private void createSlider() {
 		slider = new CircularSlider();
 		slider.setLabelFormatter(new DoubleStringConverter() {
 			@Override
@@ -59,8 +64,7 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 
 		slider.maxProperty().bind(getSkinnable().durationProperty());
 		slider.valueProperty().bindBidirectional(getSkinnable().positionProperty());
-
-		createButtons();
+		slider.disableProperty().bind(getSkinnable().mediaSelectedProperty().not());
 	}
 
 
@@ -105,6 +109,11 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 		nextButton.setTooltip(new Tooltip("Next song"));
 		shuffleButton.setTooltip(new Tooltip("Shuffled playlist"));
 		repeatButton.setTooltip(new Tooltip("Repeat playlist"));
+
+		playButton.disableProperty().bind(getSkinnable().mediaSelectedProperty().not());
+		stopButton.disableProperty().bind(getSkinnable().mediaSelectedProperty().not());
+		nextButton.disableProperty().bind(getSkinnable().mediaSelectedProperty().not().or(getSkinnable().playlistAvailableProperty().not()));
+		prevButton.disableProperty().bind(getSkinnable().mediaSelectedProperty().not().or(getSkinnable().playlistAvailableProperty().not()));
 	}
 
 	private void layoutButtons(double rad) {

@@ -102,6 +102,36 @@ public class PlayerControl extends Control {
     public final void setPlaying(boolean value) { playing.set(value); }
     public final BooleanProperty playingProperty() { return playing; }
 
+    private BooleanProperty mediaSelected = new BooleanPropertyBase(false) {
+        @Override
+        public Object getBean() {
+            return PlayerControl.this;
+        }
+
+        @Override
+        public String getName() {
+            return "mediaSelected";
+        }
+    };
+    public final boolean isMediaSelected() { return mediaSelected.get(); }
+    public final void setMediaSelected(boolean value) { mediaSelected.set(value); }
+    public final BooleanProperty mediaSelectedProperty() { return mediaSelected; }
+
+    private BooleanProperty playlistAvailable = new BooleanPropertyBase(false) {
+        @Override
+        public Object getBean() {
+            return PlayerControl.this;
+        }
+
+        @Override
+        public String getName() {
+            return "playlistAvailable";
+        }
+    };
+    public final boolean isPlaylistAvailable() { return playlistAvailable.get(); }
+    public final void setPlaylistAvailable(boolean value) { playlistAvailable.set(value); }
+    public final BooleanProperty playlistAvailableProperty() { return playlistAvailable; }
+
 
 
 	public PlayerControl() {

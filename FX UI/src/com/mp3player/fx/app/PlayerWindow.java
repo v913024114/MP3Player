@@ -1,8 +1,10 @@
 package com.mp3player.fx.app;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import com.aquafx_project.AquaFx;
@@ -34,40 +36,70 @@ public class PlayerWindow implements Initializable {
 
 	private PlayerControl control;
 
-	private PlayerStatusWrapper statw;
+	private PlayerStatus status;
+	private PlayerStatusWrapper properties;
 
 
 	public PlayerWindow(PlayerStatus status, Stage stage) throws IOException {
 		this.stage = stage;
-		statw = new PlayerStatusWrapper(status);
+		this.status = status;
+		properties = new PlayerStatusWrapper(status);
 
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("mp3player.fxml"));
 		loader.setController(this);
 		BorderPane root = loader.load();
 
 		control = new PlayerControl();
-		control.durationProperty().bind(statw.durationProperty());
-		control.positionProperty().bindBidirectional(statw.positionProperty());
-		control.playingProperty().bindBidirectional(statw.playingProperty());
+		control.durationProperty().bind(properties.durationProperty());
+		control.positionProperty().bindBidirectional(properties.positionProperty());
+		control.playingProperty().bindBidirectional(properties.playingProperty());
+		control.mediaSelectedProperty().bind(properties.mediaSelectedProperty());
+		control.playlistAvailableProperty().bind(properties.playlistAvailableProperty());
 		root.setCenter(control);
 
 		FileDropOverlay overlay = new FileDropOverlay(root);
-		overlay.setActionGenerator(files -> {
-			ToggleButton button = new ToggleButton("Play");
-			button.setOnAction(e -> {
-				RemoteFile remoteFile = statw.getStatus().getVdp().mountFile(files.get(0));
-				String mediaID = status.getPlaylist().add(remoteFile);
-				status.getTarget().setTargetMedia(mediaID);
-				status.getTarget().setTargetPlaying(true);
-			});
-			return Arrays.asList(button);
-		});
+		overlay.setActionGenerator(files -> generateDropButtons(files));
 
 		stage.setScene(scene = new Scene(root));
 		scene.getStylesheets().add(getClass().getResource("defaultstyle.css").toExternalForm());
 
 		stage.setTitle("MX Player");
 		stage.getIcons().add(new Image(getClass().getResource("window-icon.png").toExternalForm()));
+	}
+
+	private List<ToggleButton> generateDropButtons(List<File> files) {
+		List<ToggleButton> result = new ArrayList<>(4);
+
+		boolean cold = status.getPlaylist().isEmpty();
+
+		if(cold && files.size() == 1) {
+			ToggleButton playSingle = new ToggleButton("Play");
+			playSingle.setOnAction(e -> {
+				RemoteFile remoteFile = properties.getStatus().getVdp().mountFile(files.get(0));
+				String mediaID = status.getPlaylist().add(remoteFile);
+				status.getTarget().setTargetMedia(mediaID);
+				status.getTarget().setTargetPlaying(true);
+			});
+			result.add(playSingle);
+
+			List<File> allAudioFiles = AudioFiles.allAudioFilesIn(files.get(0).getParentFile());
+			if(allAudioFiles.size() > 1) {
+				ToggleButton playFolder = new ToggleButton("Play folder");
+				playFolder.setOnAction(e -> {
+					RemoteFile remoteFile = properties.getStatus().getVdp().mountFile(files.get(0));
+					String mediaID = status.getPlaylist().add(remoteFile);
+					status.getTarget().setTargetMedia(mediaID);
+					status.getTarget().setTargetPlaying(true);
+				});
+				result.add(playFolder);
+
+			}
+		}
+
+//		if(!cold)
+
+
+		return result;
 	}
 
 	@FXML
@@ -86,7 +118,8 @@ public class PlayerWindow implements Initializable {
 		settingsMenu.setText(null);
 		settingsMenu.setGraphic(loadIcon("settings.png", 20));
 		currentSongMenu.setGraphic(loadIcon("file.png", 20));
-//		currentSongMenu.textProperty().bind(statw.mediaNameProperty()); TODO
+		currentSongMenu.textProperty().bind(properties.titleProperty());
+		currentSongMenu.disableProperty().bind(properties.mediaSelectedProperty().not());
 	}
 
 
