@@ -12,8 +12,8 @@ import java.util.function.Consumer;
  * <p>
  * Each distributed object has a unique ID which must be provided in the
  * constructor. If multiple objects with the same ID are detected
- * {@link #resolveConflict(Conflict)} is called to determine which one will
- * be kept. The other instance is then discarded.
+ * {@link #resolveConflict(Conflict)} is called to determine which one will be
+ * kept. The other instance is then discarded.
  * </p>
  * <p>
  * When a distributed object is changed locally, it must call
@@ -38,6 +38,18 @@ public abstract class Distributed implements Serializable {
 	 */
 	private String id;
 	/**
+	 * This object will only be serialized and written to file if this flag is
+	 * set to true.
+	 */
+	private boolean permanent;
+	/**
+	 * Specifies whether the data is valid only as long as it's owner is
+	 * connected to the network. Also, if true, the data will only be written to
+	 * file on the owner's machine.
+	 */
+	private boolean ownerBound;
+
+	/**
 	 * Listeners are not sent through the network and will not be present at
 	 * deserialization. Therefore
 	 * {@link #copyNonTransientFieldsFrom(Distributed)} is called after
@@ -57,8 +69,10 @@ public abstract class Distributed implements Serializable {
 	 * @param id
 	 *            unique data ID with which the object can be found
 	 */
-	public Distributed(String id) {
+	public Distributed(String id, boolean permanent, boolean ownerBound) {
 		this.id = id;
+		this.permanent = permanent;
+		this.ownerBound = ownerBound;
 	}
 
 	/**
@@ -127,6 +141,27 @@ public abstract class Distributed implements Serializable {
 	 */
 	public final String getID() {
 		return id;
+	}
+
+	/**
+	 * This object will only be serialized and written to file if the permanent
+	 * flag is set to true.
+	 *
+	 * @return whether the permanent flag is set
+	 */
+	public boolean isPermanent() {
+		return permanent;
+	}
+
+	/**
+	 * Specifies whether the data is valid only as long as it's owner is
+	 * connected to the network. Also, if true, the data will only be written to
+	 * file on the owner's machine.
+	 *
+	 * @return whether the owner-bound flag is set
+	 */
+	public boolean isOwnerBound() {
+		return ownerBound;
 	}
 
 	void copyListenersFrom(Distributed other) {
