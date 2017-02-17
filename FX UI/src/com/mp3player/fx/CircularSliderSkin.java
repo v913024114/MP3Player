@@ -60,6 +60,7 @@ public class CircularSliderSkin extends SkinBase<CircularSlider> {
     private StackPane cssThumb, thumb;
     private double filledAngle = Double.NaN;
     private boolean onBar; // mouse pressed on bar or dragged from bar
+    private Duration barFadeToZeroDuration = new Duration(600);
 
     // Value tooltips
     private Tooltip mouseTooltip, barTooltip;
@@ -89,9 +90,6 @@ public class CircularSliderSkin extends SkinBase<CircularSlider> {
         oldBar.setMouseTransparent(true);
         oldBar.setStrokeLineCap(StrokeLineCap.BUTT);
         oldBar.setOpacity(0);
-        oldBar.getElements().add(new MoveTo(0, -1));
-        oldBar.getElements().add(new ArcTo(1, 1, 0, 0, 1, true, true));
-        oldBar.getElements().add(new ArcTo(1, 1, 0, 0, -1, true, true));
         centralGroup.getChildren().addAll(oldBar, bar);
 
         tickGroup = new Group();
@@ -158,8 +156,8 @@ public class CircularSliderSkin extends SkinBase<CircularSlider> {
 
         // Register listeners
 
-        control.maxProperty().addListener(e -> {rebuildTicks(); rebuildBar();});
-        control.minProperty().addListener(e -> {rebuildTicks(); rebuildBar();});
+        control.maxProperty().addListener((p,o,n) -> {rebuildTicks(); rebuildBar();});
+        control.minProperty().addListener((p,o,n) -> {rebuildTicks(); rebuildBar();});
         control.valueProperty().addListener(e -> rebuildBar());
 
         control.tickLengthProperty().addListener(e -> rebuildTicks());
@@ -362,28 +360,32 @@ public class CircularSliderSkin extends SkinBase<CircularSlider> {
         double oldAngle = filledAngle;
         filledAngle = 2*Math.PI * (value - getSkinnable().getMin()) / (getSkinnable().getMax()-getSkinnable().getMin());
 
-        bar.getElements().clear();
-        bar.getElements().add(new MoveTo(0, -1));
-        if(filledAngle <= Math.PI) {
-            bar.getElements().add(new ArcTo(1, 1, 0, Math.sin(filledAngle), - Math.cos(filledAngle), filledAngle > Math.PI, true));
-        } else {
-            bar.getElements().add(new ArcTo(1, 1, 0, 0, -1, true, true));
-            bar.getElements().add(new ArcTo(1, 1, 0, Math.sin(filledAngle), - Math.cos(filledAngle), filledAngle > Math.PI, true));
-        }
+        buildBar(bar, filledAngle);
 
-        if(oldAngle >= 2*Math.PI-0.05 && filledAngle == 0) {
+        if(oldAngle > 0 && filledAngle == 0) {
+        	buildBar(oldBar, oldAngle);
             oldBar.setOpacity(1);
             if(oldBarFade != null && oldBarFade.getStatus() == Animation.Status.RUNNING) {
                 oldBarFade.stop();
             }
-            oldBarFade = new FadeTransition(new Duration(1000), oldBar);
+            oldBarFade = new FadeTransition(barFadeToZeroDuration, oldBar);
             oldBarFade.setToValue(0);
             oldBarFade.play();
         }
 
-
         // Thumb
         thumb.resize(barWidth, barWidth);
+    }
+
+    private static void buildBar(Path bar, double filledAngle) {
+    	bar.getElements().clear();
+        bar.getElements().add(new MoveTo(0, -1));
+        if(filledAngle <= Math.PI) {
+            bar.getElements().add(new ArcTo(1, 1, 0, Math.sin(filledAngle), - Math.cos(filledAngle), filledAngle > Math.PI, true));
+        } else if(filledAngle <= 2*Math.PI){
+            bar.getElements().add(new ArcTo(1, 1, 0, 0, 1, true, true));
+            bar.getElements().add(new ArcTo(1, 1, 0, Math.sin(filledAngle), - Math.cos(filledAngle), false, true));
+        }
     }
 
     private static boolean isInt(double d, double tolerance) {
