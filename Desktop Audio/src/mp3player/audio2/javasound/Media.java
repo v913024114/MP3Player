@@ -25,7 +25,7 @@ import mp3player.desktopaudio.UnsupportedMediaFormatException;
 public class Media
 {
 	private JavaSoundEngine engine;
-	
+
 	// Source
 	private MediaFile mediaFile;
 	private MediaStream stream;
@@ -36,10 +36,10 @@ public class Media
 	private AudioDataFormat decodedAudioFormat;
 	private MemoryAudioBuffer buffer;
 	private CountDownLatch bufferFilledLatch;
-	
+
 	private List<Object> users = new CopyOnWriteArrayList<Object>();
-	
-	
+
+
 	public Media(JavaSoundEngine engine, MediaFile mediaFile) {
 		this.engine = engine;
 		this.mediaFile = mediaFile;
@@ -50,13 +50,13 @@ public class Media
 		this.engine = engine;
 		this.stream = stream;
 	}
-	
-	
-	
+
+
+
 	public void prepare() throws UnsupportedMediaFormatException, IOException
 	{
-		if(isPrepared()) return;
-		
+		if(isPrepared() && buffer.exists()) return;
+
 		if(encodedAudioFormat == null) {
 			// Load MediaFile information
 			try {
@@ -65,8 +65,8 @@ public class Media
 				// MediaStream format not known, info = null
 			}
 		}
-		
-		
+
+
 		// Create AudioInputStream from either MediaFile or MediaStream
 		AudioInputStream in;
 		if(mediaFile != null) { // MediaFile
@@ -81,15 +81,15 @@ public class Media
 			in = new AudioInputStream(stream.getStream(), streamAf, stream.getFrameLength());
 		}
 		engine.getLogger().finer("Opened mediaFile stream "+in.getFormat());
-		
-		
+
+
 		// Decode stream
 	    AudioInputStream decodedStream = AudioSystem2.convert(in);
 	    engine.getLogger().finer("Decoded format is "+decodedStream.getFormat());
-	    
+
 	    decodedAudioFormat = AudioSystem2.toAudioDataFormat(decodedStream.getFormat());
 
-	    
+
 	    // Create and fill buffer
 	    long frameLength = decodedStream.getFrameLength();
 	    buffer = new MemoryAudioBuffer(decodedStream.getFormat(), frameLength);
@@ -104,13 +104,13 @@ public class Media
 	    			bufferFilledLatch.countDown();
 	    			engine.getLogger().warning("Buffer closed before filled "+buffer);
     			});
-		
+
 	}
-	
+
 	public void waitUntilBufferFilled() throws InterruptedException {
 		bufferFilledLatch.await();
 	}
-	
+
 
 	private static AudioInputStream openMedia(MediaFile media) throws UnsupportedMediaFormatException, IOException {
 		if(media.getFile() != null) {
@@ -132,18 +132,18 @@ public class Media
 			}
 		}
 	}
-	
+
 
 	public MediaStream newEncodedStream() throws IOException,
 			UnsupportedMediaFormatException {
 		if(mediaFile != null) {
 			if(info == null) loadMediaFormat();
-			
+
 			AudioInputStream in = openMedia(mediaFile);
 			AudioFormat af = in.getFormat();
 			long frameLength = in.getFrameLength();
 			long streamLength = (frameLength < 0 || af.getFrameSize() < 0) ? -1 : frameLength * af.getFrameSize();
-			
+
 			return new MediaStream(in,
 					streamLength, frameLength, 0,
 					encodedAudioFormat, info.getFormat());
@@ -159,7 +159,7 @@ public class Media
 		int frame = buffer.getFrame(startPositionMillis);
 		int frameLength = buffer.getFrameLength() < 0 ? -1 : buffer.getFrameLength() - frame;
 		int streamLength = frameLength * buffer.getFormat().getFrameSize();
-		
+
 		return new MediaStream(
 				buffer.audioStreamFromFrame(frame),
 				streamLength,
@@ -187,7 +187,7 @@ public class Media
 	{
 		if(mediaFile != null) {
 			AudioFileFormat aff;
-			
+
 			if(mediaFile.getFile() == null) {
 				// Obtain format from InputStream
 				InputStream mediaIn = mediaFile.openStream();
@@ -223,9 +223,9 @@ public class Media
 				throw new UnsupportedOperationException("format of stream unknown");
 			}
 		}
-		
+
 	}
-	
+
 	public MediaFormat getMediaFormat() {
 		if(info == null) return null;
 		return info.getFormat();
@@ -265,22 +265,22 @@ public class Media
 	public MemoryAudioBuffer getBuffer() {
 		return buffer;
 	}
-	
-	
+
+
 	public void addUser(Object user) {
 		users.add(user);
 	}
-	
-	public void removeUserDispose(Object user) {
+
+	public void removeUserDealloc(Object user) {
 		users.remove(user);
 		if(users.isEmpty()) {
-			dispose();
+			dealloc();
 		}
 	}
 
 
-	public void dispose() {
-		buffer.dispose();
+	public void dealloc() {
+		buffer.dealloc(true);
 	}
 
 
@@ -288,5 +288,5 @@ public class Media
 		if(buffer.isClosed()) return buffer.getDurationMicros() / 1000_000.0;
 		else return info.getDuration();
 	}
-	
+
 }

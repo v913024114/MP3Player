@@ -98,6 +98,19 @@ public class PlaybackEngine {
 					player.setMute(mute);
 					player.setGain(gain);
 					player.addEndOfMediaListener(e -> next());
+					if(player.getDuration() < 0) {
+						new Thread(() -> {
+							try {
+								player.waitForDurationProperty();
+							} catch (IllegalStateException e1) {
+								e1.printStackTrace();
+								return;
+							} catch (InterruptedException e1) {
+								return;
+							}
+							publishInfo();
+						}).start();
+					}
 					errorMessage = null;
 				} catch(Exception exc) {
 					player = null;
@@ -125,7 +138,6 @@ public class PlaybackEngine {
 		if(target.wasTargetPositionSetAfter(lastPositionUpdate)) {
 			lastPositionUpdate = target.getPositionUpdateTime();
 			try {
-				System.out.println("Setting position to "+target.getTargetPosition().getAsDouble()+", issued at "+target.getPositionUpdateTime());
 				player.setPositionBlocking(target.getTargetPosition().getAsDouble(), 1.0);
 			} catch (InterruptedException e1) {
 				// TODO Auto-generated catch block

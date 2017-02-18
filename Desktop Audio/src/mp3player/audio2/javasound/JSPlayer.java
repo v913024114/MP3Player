@@ -24,25 +24,25 @@ public class JSPlayer extends AbstractPlayer
 {
 	private JavaSoundEngine engine;
 	private Media media;
-	
+
 	// Target
 	private JSChannel channel; // active when not null
 	private double gain;
 	private boolean mute;
 	private double balance;
 	private int offlinePositionMillis; // position in millis
-	
+
 	// Listeners, etc.
 	private Player next;
-	
-	
-	
+
+
+
 	public JSPlayer(Media m) {
 		media = m;
 		engine = m.getEngine();
 		m.addUser(this);
 	}
-	
+
 
 	@Override
 	public MediaFile getMediaFile() {
@@ -59,7 +59,7 @@ public class JSPlayer extends AbstractPlayer
 			IOException {
 		media.prepare();
 	}
-	
+
 
 	@Override
 	public MediaStream newEncodedStream() throws IOException,
@@ -129,7 +129,7 @@ public class JSPlayer extends AbstractPlayer
 		} catch (LineUnavailableException e) {
 			throw new AudioEngineException(e);
 		}
-		
+
 		fireActivated(offlinePositionMillis, PlayerEvent.USER_COMMAND);
 	}
 
@@ -152,7 +152,7 @@ public class JSPlayer extends AbstractPlayer
 	public void dispose() {
 		deactivate();
 		engine.remove(this);
-		media.removeUserDispose(this);
+		media.removeUserDealloc(this);
 	}
 
 	@Override
@@ -165,7 +165,7 @@ public class JSPlayer extends AbstractPlayer
 	public void start() throws IllegalStateException {
 		if(!isActive()) throw new IllegalStateException("must be active to start");
 		channel.start();
-		
+
 		fireStarted(offlinePositionMillis, PlayerEvent.USER_COMMAND);
 	}
 
@@ -174,7 +174,7 @@ public class JSPlayer extends AbstractPlayer
 		if(!isActive()) throw new IllegalStateException("player is not active");
 		channel.pause();
 		offlinePositionMillis = channel.getPositionMillis();
-		
+
 		fireStopped(offlinePositionMillis, PlayerEvent.USER_COMMAND);
 	}
 
@@ -186,14 +186,15 @@ public class JSPlayer extends AbstractPlayer
 
 	@Override
 	public void setPositionBlocking(double posSec, double timeout) {
+		if(posSec < 0) throw new IllegalArgumentException("pos < 0");
 		int posMillis = (int) (posSec * 1000);
 		double oldPosition = getPosition();
-		
+
 		offlinePositionMillis = posMillis;
 		if(isActive()) {
 			channel.seek(posMillis);
 		}
-		
+
 		firePositionChanged(oldPosition, PlayerEvent.USER_COMMAND);
 	}
 
@@ -282,10 +283,10 @@ public class JSPlayer extends AbstractPlayer
 	@Override
 	public void setNext(Player nextPlayer) throws IllegalStateException,
 			IllegalArgumentException {
-		
+
 		next = nextPlayer;
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
@@ -324,14 +325,14 @@ public class JSPlayer extends AbstractPlayer
 	@Override
 	public void addMarker(double position, MarkerListener l) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 
 	@Override
 	public void removeMarker(MarkerListener l) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }

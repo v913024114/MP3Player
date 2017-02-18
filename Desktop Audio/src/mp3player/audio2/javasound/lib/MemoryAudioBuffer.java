@@ -29,20 +29,20 @@ public class MemoryAudioBuffer implements AudioBuffer
 {
 	private long frameLength;
 	private AudioFormat format;
-	
+
 	private ArrayList<byte[]> data;
 	private int arraySize;
-	
+
 	private int filledBytes;
 	private boolean closed;
-	
+
 	private Object ioMonitor = this;
-	
-	
+
+
 	public MemoryAudioBuffer(AudioFormat f, long frameLength) {
 		this(f, frameLength, 64*1024);
 	}
-	
+
 	public MemoryAudioBuffer(AudioFormat f, long frameLength, int chunkSize) {
 		if(frameLength == 0) throw new IllegalArgumentException("frameLength cannot be 0.");
 		format = f;
@@ -53,10 +53,10 @@ public class MemoryAudioBuffer implements AudioBuffer
 		filledBytes = 0;
 		closed = false;
 	}
-	
-	
+
+
 	/**
-	 * 
+	 *
 	 * @param buffer
 	 * @param off
 	 * @param len
@@ -65,7 +65,7 @@ public class MemoryAudioBuffer implements AudioBuffer
 	public synchronized int fill(byte[] buffer, int off, int len) throws IllegalStateException
 	{
 		if(closed) throw new IllegalStateException();
-		
+
 		int written = 0;
 		while(written < len) {
 			int localFilled = filledBytes % arraySize;
@@ -95,7 +95,7 @@ public class MemoryAudioBuffer implements AudioBuffer
 		notifyAll();
 		return written;
 	}
-	
+
 	public void startFilling(AudioInputStream in, Runnable onBufferFilled, Runnable onBufferClosed) {
 		new Thread(() -> {
 			try {
@@ -106,7 +106,7 @@ public class MemoryAudioBuffer implements AudioBuffer
 			}
 		}, "Fill Audio Buffer").start();
 	}
-	
+
 	public void fill(AudioInputStream in) throws IllegalStateException
 	{
 		int available = 4*1024;
@@ -130,74 +130,78 @@ public class MemoryAudioBuffer implements AudioBuffer
 		}
 		close();
 	}
-	
+
 	public synchronized void close() {
 		frameLength = filledBytes / format.getFrameSize();
 		closed = true;
 		notifyAll();
 	}
-	
+
 	public boolean isClosed() {
 		return closed;
 	}
-	
+
 	public AudioFormat getFormat() {
 		return format;
 	}
-	
+
 	public int getFrameLength() {
 		return (int) frameLength;
 	}
-	
+
 	public long getFramesFilled() {
 		return filledBytes / format.getFrameSize();
 	}
-	
+
 	public int getFrame(int positionMillis) {
 		return (int) ((positionMillis / 1000.0) * format.getFrameRate());
 	}
-	
+
 	public double getDuration() {
 		if(frameLength == AudioSystem.NOT_SPECIFIED) return AudioSystem.NOT_SPECIFIED;
 		return frameLength / format.getFrameRate();
 	}
-	
+
 	public int getDurationMillis() {
 		if(frameLength == AudioSystem.NOT_SPECIFIED) return AudioSystem.NOT_SPECIFIED;
 		return (int) Math.round(frameLength * 1000.0 / format.getFrameRate());
 	}
-	
+
 	public long getDurationMicros() {
 		if(frameLength == AudioSystem.NOT_SPECIFIED) return AudioSystem.NOT_SPECIFIED;
 		return (int) Math.round(frameLength * 1_000_000.0 / format.getFrameRate());
 	}
-	
+
 	public long getAllocatedMemory() {
 		if(data == null) return 0;
 		return data.size() * (long) arraySize;
 	}
-	
+
 	public int getAllocatedMemoryMB() {
 		return (int) (getAllocatedMemory() / (1024*1024));
 	}
-	
+
 	@Override
 	public String toString() {
 		double durationSec = Math.round(getDuration()*10.0) / 10.0;
 		return "("+durationSec+"sec, "+getFrameLength()+" frames, "+getAllocatedMemoryMB()+"MB)";
 	}
-	
-	public void dispose() {
-		if(!closed) throw new IllegalStateException("must be closed first");
+
+	public void dealloc(boolean runGC) {
+		if(!closed) close();
 		data.clear();
 		data = null;
-		System.gc();
+		if(runGC) System.gc();
 	}
-	
+
+	public boolean exists() {
+		return data != null;
+	}
+
 	public int getChunkSize() {
 		return arraySize;
 	}
-	
+
 	/**
 	 * Returns an <code>InputStream</code> that starts from
 	 * the beginning of the array.
@@ -208,7 +212,7 @@ public class MemoryAudioBuffer implements AudioBuffer
 	public ByteStream stream() {
 		return new ByteStream();
 	}
-	
+
 	public AudioInputStream audioStream() {
 		int frameLength = (int) this.frameLength;
 		return new AudioInputStream(stream(), format, frameLength);
@@ -219,13 +223,14 @@ public class MemoryAudioBuffer implements AudioBuffer
 		return audioStreamFromFrame(startFrame);
 	}
 	public AudioInputStream audioStreamFromFrame(int startFrame) {
+		if(startFrame < 0) throw new IllegalArgumentException("startFrame < 0");
 		int frameLength = (int) this.frameLength;
 		ByteStream in = stream();
 		in.skip(startFrame * format.getFrameSize());
 		int restFrames = frameLength == -1 ? -1 : frameLength-startFrame;
 		return new AudioInputStream(in, format, restFrames);
 	}
-	
+
 
 	@Override
 	public double getStartPosition() {
@@ -236,38 +241,38 @@ public class MemoryAudioBuffer implements AudioBuffer
 	public double getEndPosition() {
 		return getFramesFilled() / format.getFrameRate();
 	}
-	
-	
-	
-	
+
+
+
+
 	private class ByteStream extends InputStream
 	{
 		private int position;
 		private int mark = 0;
-		
+
 		@Override
 		public synchronized int available() {
 			return filledBytes - position;
 		}
-		
+
 		@Override
 		public void close() {}
-		
+
 		@Override
 		public synchronized void mark(int readLimit) {
 			mark = position;
 		}
-		
+
 		@Override
 		public boolean markSupported() {
 			return true;
 		}
-		
+
 		public synchronized boolean endReached() {
 			if(closed) return position >= filledBytes;
 			else return false;
 		}
-		
+
 		@Override
 		public synchronized int read() throws IOException {
 			if(endReached()) return -1;
@@ -279,17 +284,19 @@ public class MemoryAudioBuffer implements AudioBuffer
 			position ++;
 			return b;
 		}
-		
+
 		@Override
 		public synchronized int read(byte[] b, int off, int len) {
 			if(endReached()) return -1;
 			block();
 			if(endReached()) return -1;
 			len = Math.min(len, available());
-			
+
 			int written = 0;
 			while(written < len) {
 				int arrayIndex = position / arraySize;
+				if(arrayIndex < 0)
+					System.err.println("Negative index");
 				int localPosition = position % arraySize;
 				int writing = Math.min(len-written, arraySize-localPosition);
 				System.arraycopy(data.get(arrayIndex), localPosition, b, written+off, writing);
@@ -298,32 +305,35 @@ public class MemoryAudioBuffer implements AudioBuffer
 			}
 			return len;
 		}
-		
+
 		@Override
 		public synchronized void reset() {
+			System.out.println("Resetting");
 			position = mark;
 		}
-		
+
 		@Override
 		public synchronized long skip(long n) {
+			if(n < 0) throw new IllegalArgumentException();
 			if(endReached()) return -1;
-			
+
 			while(available() < n) {
 				block();
 				if(endReached()) return -1;
 				if(closed) break;
 			}
-			
+
 			if(closed) {
+				System.out.println("Closed");
 				n = Math.min(n, available());
 			}
-			
+
 			position += n;
 			return n;
 		}
 
 		/**
-		 * 
+		 *
 		 * @return false if interrupted
 		 */
 		private synchronized boolean block() {
@@ -337,7 +347,7 @@ public class MemoryAudioBuffer implements AudioBuffer
 				}
 			}
 		}
-		
+
 	}
 
 
