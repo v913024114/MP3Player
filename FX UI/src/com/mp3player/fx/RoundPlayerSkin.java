@@ -31,6 +31,7 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 	private ToggleButton playButton, repeatButton, shuffleButton;
 	private Button stopButton, prevButton, nextButton;
 	private double innerMargin = 2, outerMargin = 5;
+	private ImageView playIcon, pauseIcon;
 
 
 	public RoundPlayerSkin(PlayerControl control) {
@@ -73,8 +74,15 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 		buttonPane.setPickOnBounds(false);
 		buttonRoot = new Group(buttonPane);
 		getChildren().add(buttonRoot);
-		buttonPane.setCenter(playButton = new ToggleButton(null, loadIcon("icons/Play_MouseOff.png", 32, 32)));
+
+		playIcon = loadIcon("icons/Play_MouseOff.png", 32, 32);
+		pauseIcon = loadIcon("icons/Pause_MouseOff.png", 32, 32);
+		buttonPane.setCenter(playButton = new ToggleButton(null, playIcon));
 		playButton.selectedProperty().bindBidirectional(getSkinnable().playingProperty());
+
+		getSkinnable().playingProperty().addListener((p,o,n) -> {
+			playButton.setGraphic(n ? pauseIcon : playIcon);
+		});
 
 		BorderPane bottomButtonPane = new BorderPane();
 		bottomButtonPane.setPickOnBounds(false);
@@ -127,6 +135,7 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 			if(getSkinnable().getOnStop() != null)
 				getSkinnable().getOnStop().handle(e);
 		});
+
 	}
 
 	private void layoutButtons(double rad) {
