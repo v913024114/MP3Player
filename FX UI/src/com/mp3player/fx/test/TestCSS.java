@@ -1,12 +1,6 @@
 package com.mp3player.fx.test;
-import com.sun.javafx.scene.control.skin.SliderSkin;
-
 import javafx.application.Application;
 import javafx.scene.Scene;
-import javafx.scene.chart.Axis;
-import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.ValueAxis;
-import javafx.scene.control.Slider;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
@@ -38,11 +32,11 @@ public class TestCSS extends Application{
 
 		System.out.println(bg.getBackground().getFills());
 
-		Slider slider;
-		SliderSkin skin;
-		Axis<?> axis;
-		ValueAxis va;
-		NumberAxis na;
+//		Slider slider;
+//		SliderSkin skin;
+//		Axis<?> axis;
+//		ValueAxis va;
+//		NumberAxis na;
 
 	}
 }
