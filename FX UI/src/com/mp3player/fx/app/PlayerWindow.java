@@ -82,6 +82,10 @@ public class PlayerWindow implements Initializable {
 		});
 	}
 
+	public PlayerStatusWrapper getStatusWrapper() {
+		return properties;
+	}
+
 	private List<ToggleButton> generateDropButtons(List<File> files) {
 		List<ToggleButton> result = new ArrayList<>(4);
 

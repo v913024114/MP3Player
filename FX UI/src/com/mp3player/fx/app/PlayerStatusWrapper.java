@@ -104,8 +104,8 @@ public class PlayerStatusWrapper {
 				newValue -> status.getTarget().setTargetPlaying(newValue));
 
 		playlistAvailable = new DistributedBooleanProperty("playlistAvailable", this,
-				status.getPlaylist(),
-				() -> status.getPlaylist().size() > 1,
+				status.getPlaylist(), status.getPlayback(),
+				() -> status.getPlaylist().size() > 1 || (status.getPlaylist().size() == 1 && !status.getPlayback().getCurrentMedia().isPresent()),
 				newValue -> { throw new UnsupportedOperationException("cannot set duration"); });
 
 		position = new DistributedDoubleProperty("position", this,
@@ -149,20 +149,16 @@ public class PlayerStatusWrapper {
 		return status;
 	}
 
-	public boolean next() {
+	public void next() {
 		Optional<String> current = status.getPlayback().getCurrentMedia();
-		if(!current.isPresent()) return false;
 		Optional<String> next = status.getPlaylist().getNext(current, status.getTarget().isLoop());
 		status.getTarget().setTargetMedia(next, true);
-		return true;
 	}
 
-	public boolean previous() {
+	public void previous() {
 		Optional<String> current = status.getPlayback().getCurrentMedia();
-		if(!current.isPresent()) return false;
 		Optional<String> previous = status.getPlaylist().getPrevious(current, status.getTarget().isLoop());
 		status.getTarget().setTargetMedia(previous, true);
-		return true;
 	}
 
 	public void stop() {
@@ -269,7 +265,6 @@ public class PlayerStatusWrapper {
 		private String name;
 		private Object bean;
 
-		private Distributed distributed;
 		private BooleanSupplier getter;
 		private Consumer<Boolean> setter;
 		private boolean lastValue;
@@ -282,14 +277,24 @@ public class PlayerStatusWrapper {
 				Consumer<Boolean> setter) {
 			this.name = name;
 			this.bean = bean;
-			this.distributed = distributed;
 			this.getter = getter;
 			this.setter = setter;
 			invalidated();
-			register();
+			register(distributed);
 		}
 
-		private void register() {
+		public DistributedBooleanProperty(String name, Object bean, Distributed distributed1, Distributed distributed2, BooleanSupplier getter,
+				Consumer<Boolean> setter) {
+			this.name = name;
+			this.bean = bean;
+			this.getter = getter;
+			this.setter = setter;
+			invalidated();
+			register(distributed1);
+			register(distributed2);
+		}
+
+		private void register(Distributed distributed) {
 			distributed.addDataChangeListener(e -> Platform.runLater(() -> invalidated()));
 		}
 
