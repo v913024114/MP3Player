@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -28,6 +30,8 @@ public class VDP {
 
 	private Map<String, Distributed> localData = new HashMap<>();
 
+	private ExecutorService eventHandler;
+
 	/**
 	 * Creates a new virtual distributed platform. The created platform will
 	 * only know the local peer and does not actively connect to other peers or
@@ -36,6 +40,8 @@ public class VDP {
 	 */
 	public VDP() {
 		localPeer = new LocalPeer();
+
+		eventHandler = Executors.newSingleThreadExecutor();
 	}
 
 	/**
@@ -185,8 +191,10 @@ public class VDP {
 	}
 
 	void changed(Distributed distributed) {
-		DataChangeEvent e = new DataChangeEvent(localPeer, localPeer, System.currentTimeMillis(), System.currentTimeMillis());
-		distributed._fireChanged(e);
+		eventHandler.execute(() -> {
+			DataChangeEvent e = new DataChangeEvent(localPeer, localPeer, System.currentTimeMillis(), System.currentTimeMillis());
+			distributed._fireChanged(e);
+		});
 	}
 
 	public Consumer<ConnectionEvent> getOnPeerConnected() {
