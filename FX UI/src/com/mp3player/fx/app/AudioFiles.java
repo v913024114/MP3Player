@@ -3,6 +3,7 @@ package com.mp3player.fx.app;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class AudioFiles {
 	public static final List<String> AUDIO_FILE_EXTENSIONS = Arrays.asList(
@@ -23,5 +24,9 @@ public class AudioFiles {
 
 	public static boolean isAudioFile(String filename) {
 		return AUDIO_FILE_EXTENSIONS.stream().anyMatch(ext -> filename.toLowerCase().endsWith("."+ext));
+	}
+
+	public static List<File> trim(List<File> arbitraryFileList) {
+		return arbitraryFileList.stream().filter(file -> isAudioFile(file)).collect(Collectors.toList());
 	}
 }

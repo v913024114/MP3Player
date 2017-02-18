@@ -22,7 +22,7 @@
                   <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
                </padding>
             </Separator>
-            <Slider max="6.0" maxWidth="1.7976931348623157E308" min="-40.0" prefHeight="38.0" prefWidth="156.0" showTickLabels="true" showTickMarks="true" />
+            <Slider fx:id="volume" max="6.0" maxWidth="1.7976931348623157E308" min="-40.0" prefHeight="38.0" prefWidth="156.0" showTickLabels="true" showTickMarks="true" />
          </children>
          <padding>
             <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
@@ -61,14 +61,17 @@
                            </accelerator></MenuItem>
                         <MenuItem mnemonicParsing="false" text="Info" />
                         <SeparatorMenuItem mnemonicParsing="false" />
-                        <MenuItem mnemonicParsing="false" text="Exit" />
+                        <MenuItem mnemonicParsing="false" onAction="#quit" text="Quit">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="Q" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
+                           </accelerator></MenuItem>
                   </items>
                 </Menu>
               </menus>
             </MenuBar>
          </right>
          <center>
-            <MenuBar BorderPane.alignment="CENTER">
+            <MenuBar fx:id="menuBar" BorderPane.alignment="CENTER">
               <menus>
                 <Menu fx:id="currentSongMenu" mnemonicParsing="false" text="Song title">
                   <items>

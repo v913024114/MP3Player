@@ -1,11 +1,13 @@
 package com.mp3player.fx;
 
-import com.sun.javafx.util.Utils;
-
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.BooleanPropertyBase;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.DoublePropertyBase;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.AccessibleAttribute;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
@@ -13,7 +15,6 @@ import javafx.scene.control.Skin;
 public class PlayerControl extends Control {
 	private DoubleProperty duration = new DoublePropertyBase(0) {
         @Override protected void invalidated() {
-            adjustPosition();
             notifyAccessibleAttributeChanged(AccessibleAttribute.VALUE);
         }
 
@@ -35,7 +36,6 @@ public class PlayerControl extends Control {
 
 	private DoubleProperty position = new DoublePropertyBase(0) {
         @Override protected void invalidated() {
-            adjustPosition();
             notifyAccessibleAttributeChanged(AccessibleAttribute.MAX_VALUE);
         }
 
@@ -55,7 +55,7 @@ public class PlayerControl extends Control {
 
 
 	/** true if minor tick marks should be displayed */
-    private BooleanProperty repeat = new BooleanPropertyBase(true) {
+    private BooleanProperty loop = new BooleanPropertyBase(true) {
         @Override
         public Object getBean() {
             return PlayerControl.this;
@@ -63,12 +63,12 @@ public class PlayerControl extends Control {
 
         @Override
         public String getName() {
-            return "repeat";
+            return "loop";
         }
     };
-    public final boolean isRepeat() { return repeat.get(); }
-    public final void setRepeat(boolean value) { repeat.set(value); }
-    public final BooleanProperty repeatProperty() { return repeat; }
+    public final boolean isLoop() { return loop.get(); }
+    public final void setLoop(boolean value) { loop.set(value); }
+    public final BooleanProperty loopProperty() { return loop; }
 
     /** true if minor tick marks should be displayed */
     private BooleanProperty shuffled = new BooleanPropertyBase(false) {
@@ -132,6 +132,20 @@ public class PlayerControl extends Control {
     public final void setPlaylistAvailable(boolean value) { playlistAvailable.set(value); }
     public final BooleanProperty playlistAvailableProperty() { return playlistAvailable; }
 
+    private ObjectProperty<EventHandler<ActionEvent>> onNext = new SimpleObjectProperty<>();
+    public EventHandler<ActionEvent> getOnNext() { return onNext.get(); }
+    public void setOnNext(EventHandler<ActionEvent> value) { onNext.setValue(value); }
+    public ObjectProperty<EventHandler<ActionEvent>> onNextProperty() { return onNext; }
+
+    private ObjectProperty<EventHandler<ActionEvent>> onPrevious = new SimpleObjectProperty<>();
+    public EventHandler<ActionEvent> getOnPrevious() { return onPrevious.get(); }
+    public void setOnPrevious(EventHandler<ActionEvent> value) { onPrevious.setValue(value); }
+    public ObjectProperty<EventHandler<ActionEvent>> onPreviousProperty() { return onPrevious; }
+
+    private ObjectProperty<EventHandler<ActionEvent>> onStop = new SimpleObjectProperty<>();
+    public EventHandler<ActionEvent> getOnStop() { return onStop.get(); }
+    public void setOnStop(EventHandler<ActionEvent> value) { onStop.setValue(value); }
+    public ObjectProperty<EventHandler<ActionEvent>> onStopProperty() { return onStop; }
 
 
 	public PlayerControl() {
@@ -143,12 +157,4 @@ public class PlayerControl extends Control {
 	protected Skin<?> createDefaultSkin() {
 		return new RoundPlayerSkin(this);
 	}
-
-	/**
-     * Ensures that pos < duration
-     */
-    private void adjustPosition() {
-        if (getPosition() < 0 || getPosition() > getDuration())
-             setPosition(Utils.clamp(0, getPosition(), getDuration()));
-    }
 }

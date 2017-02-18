@@ -1,6 +1,7 @@
 package com.mp3player.fx.app;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -56,6 +57,26 @@ public class PlayerStatusWrapper {
 	public boolean isPlaylistAvailable() { return playlistAvailable.get(); }
 	public ReadOnlyBooleanProperty playlistAvailableProperty() { return playlistAvailable; }
 
+	private DistributedDoubleProperty gain;
+	public double getGain() { return gain.get(); }
+	public void setGain(double value) { gain.set(value); }
+	public DoubleProperty gainProperty() { return gain; }
+
+	private BooleanProperty mute;
+	public boolean isMute() { return mute.get(); }
+	public void setMute(boolean value) { mute.set(value); }
+	public BooleanProperty muteProperty() { return mute; }
+
+	private BooleanProperty loop;
+	public boolean isLoop() { return loop.get(); }
+	public void setLoop(boolean value) { loop.set(value); }
+	public BooleanProperty loopProperty() { return loop; }
+
+	private BooleanProperty shuffled;
+	public boolean isShuffled() { return shuffled.get(); }
+	public void setShuffled(boolean value) { shuffled.set(value); }
+	public BooleanProperty shuffledProperty() { return shuffled; }
+
 
 	public PlayerStatusWrapper(PlayerStatus status) {
 		this.status = status;
@@ -72,11 +93,14 @@ public class PlayerStatusWrapper {
 
 		title = new DistributedReadOnlyStringProperty("title", this,
 				status.getPlayback(),
-				() -> status.lookup(status.getPlayback().getCurrentMedia()).map(f -> f.getName()).orElse(noMediaText));
+				() -> {
+					if(status.getPlayback().getBusyText() != null) return status.getPlayback().getBusyText();
+					return status.lookup(status.getPlayback().getCurrentMedia()).map(f -> f.getName()).orElse(noMediaText);
+					});
 
 		mediaSelected = new DistributedBooleanProperty("mediaSelected", this,
 				status.getPlayback(),
-				() -> status.getPlayback().getCurrentMedia() != null,
+				() -> status.getPlayback().getCurrentMedia() != null && status.getPlayback().getCurrentMedia().isPresent(),
 				newValue -> status.getTarget().setTargetPlaying(newValue));
 
 		playlistAvailable = new DistributedBooleanProperty("playlistAvailable", this,
@@ -87,23 +111,62 @@ public class PlayerStatusWrapper {
 		position = new DistributedDoubleProperty("position", this,
 				status.getPlayback(),
 				() -> status.getPlayback().getCurrentPosition(),
-				newValue -> status.getTarget().setTargetPosition(newValue)) {
+				newValue -> status.getTarget().setTargetPosition(newValue, true)) {
 			@Override
 			public double get() {
 				return status.getPlayback().getCurrentPosition();
 			}
 		};
-
 		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
 			if(isPlaying()) {
 				Platform.runLater(() -> position.invalidated());
 			}
 		}, 50, 50, TimeUnit.MILLISECONDS);
+
+		gain = new DistributedDoubleProperty("gain", this,
+				status.getPlayback(),
+				() -> status.getPlayback().getGain(),
+				newValue -> status.getTarget().setTargetGain(newValue));
+
+		mute = new DistributedBooleanProperty("mute", this,
+				status.getPlayback(),
+				() -> status.getPlayback().isMute(),
+				newValue -> status.getTarget().setTargetMute(newValue));
+
+		loop = new DistributedBooleanProperty("loop", this,
+				status.getTarget(),
+				() -> status.getTarget().isLoop(),
+				newValue -> status.getTarget().setLoop(newValue));
+
+		shuffled = new DistributedBooleanProperty("shuffled", this,
+				status.getTarget(),
+				() -> status.getTarget().isShuffled(),
+				newValue -> status.getTarget().setShuffled(newValue));
 	}
 
 
 	public PlayerStatus getStatus() {
 		return status;
+	}
+
+	public boolean next() {
+		Optional<String> current = status.getPlayback().getCurrentMedia();
+		if(!current.isPresent()) return false;
+		Optional<String> next = status.getPlaylist().getNext(current, status.getTarget().isLoop());
+		status.getTarget().setTargetMedia(next, true);
+		return true;
+	}
+
+	public boolean previous() {
+		Optional<String> current = status.getPlayback().getCurrentMedia();
+		if(!current.isPresent()) return false;
+		Optional<String> previous = status.getPlaylist().getPrevious(current, status.getTarget().isLoop());
+		status.getTarget().setTargetMedia(previous, true);
+		return true;
+	}
+
+	public void stop() {
+		status.getTarget().stop();
 	}
 
 
@@ -133,7 +196,7 @@ public class PlayerStatusWrapper {
 		}
 
 		private void register() {
-			distributed.addDataChangeListener(e -> invalidated());
+			distributed.addDataChangeListener(e -> Platform.runLater(() -> invalidated()));
 		}
 
 		protected void invalidated() {
@@ -196,7 +259,7 @@ public class PlayerStatusWrapper {
 		}
 		@Override
 		public void set(double value) {
-			setter.accept(value);
+			if(value != lastValue) setter.accept(value);
 		}
 	}
 
@@ -227,7 +290,7 @@ public class PlayerStatusWrapper {
 		}
 
 		private void register() {
-			distributed.addDataChangeListener(e -> invalidated());
+			distributed.addDataChangeListener(e -> Platform.runLater(() -> invalidated()));
 		}
 
 		protected void invalidated() {
@@ -290,7 +353,7 @@ public class PlayerStatusWrapper {
 		}
 		@Override
 		public void set(boolean value) {
-			setter.accept(value);
+			if(value != lastValue) setter.accept(value);
 		}
 	}
 
@@ -318,7 +381,7 @@ public class PlayerStatusWrapper {
 		}
 
 		private void register() {
-			distributed.addDataChangeListener(e -> invalidated());
+			distributed.addDataChangeListener(e -> Platform.runLater(() -> invalidated()));
 		}
 
 		protected void invalidated() {
@@ -366,4 +429,5 @@ public class PlayerStatusWrapper {
 			return lastValue;
 		}
 	}
+
 }

@@ -1,20 +1,41 @@
 package mp3player.player.data;
 
+import java.util.Optional;
+import java.util.OptionalDouble;
+
 import com.mp3player.vdp.Conflict;
 import com.mp3player.vdp.Distributed;
 
+/**
+ * This shared data object contains all commands for the playback engine. This
+ * includes what media to play, the volume, etc. Except for the target position,
+ * all fields should indicate the values the playback engine should use.
+ *
+ * @author Philipp Holl
+ *
+ */
 public class PlayerTarget extends Distributed {
 	private static final long serialVersionUID = 3507019847042275473L;
 
 	public static final String VDP_ID = "player-target";
 
-	private String targetDevice; // only set if device is to change
-	private String targetMedia; // only set if media is to change
+	private String targetDevice;
+
+	/**
+	 * if empty, dispose of player
+	 */
+	private Optional<String> targetMedia = Optional.empty();
+
 	private double targetGain;
 	private boolean targetMute;
 	private boolean targetPlaying;
-	private double targetPosition = -1; // -1 if not to change
 
+	private OptionalDouble targetPosition = OptionalDouble.empty();
+	/** The time at which the target position request was issued */
+	private long positionUpdateTime;
+
+	private boolean loop;
+	private boolean shuffled;
 
 	public PlayerTarget() {
 		super(VDP_ID, true, false);
@@ -35,14 +56,17 @@ public class PlayerTarget extends Distributed {
 		fireChangedLocally();
 	}
 
-	public String getTargetMedia() {
+	public Optional<String> getTargetMedia() {
 		return targetMedia;
 	}
 
-	public void setTargetMedia(String targetMedia, boolean startPlayingImmediately) {
+	public void setTargetMedia(Optional<String> targetMedia, boolean startPlayingImmediately) {
 		this.targetMedia = targetMedia;
-		if(startPlayingImmediately) {
+		if (startPlayingImmediately) {
 			targetPlaying = true;
+		}
+		if(!targetMedia.isPresent()) {
+			targetPlaying = false;
 		}
 		fireChangedLocally();
 	}
@@ -74,16 +98,47 @@ public class PlayerTarget extends Distributed {
 		fireChangedLocally();
 	}
 
-	public double getTargetPosition() {
+	public OptionalDouble getTargetPosition() {
 		return targetPosition;
 	}
 
-	public boolean isTargetPositionSet() {
-		return targetPosition >= 0;
+	public long getPositionUpdateTime() {
+		return positionUpdateTime;
 	}
 
-	public void setTargetPosition(double targetPosition) {
-		this.targetPosition = targetPosition;
+	public void setTargetPosition(double targetPosition, boolean startPlaying) {
+		this.targetPosition = OptionalDouble.of(targetPosition);
+		positionUpdateTime = System.currentTimeMillis();
+		if(startPlaying) {
+			targetPlaying = true;
+		}
+		fireChangedLocally();
+	}
+
+	public boolean wasTargetPositionSetAfter(long lastUpdateTime) {
+		return positionUpdateTime > lastUpdateTime && targetPosition.isPresent();
+	}
+
+	public boolean isLoop() {
+		return loop;
+	}
+
+	public void setLoop(boolean loop) {
+		this.loop = loop;
+		fireChangedLocally();
+	}
+
+	public void stop() {
+		targetPlaying = false;
+		setTargetPosition(0, false);
+	}
+
+	public boolean isShuffled() {
+		return shuffled;
+	}
+
+	public void setShuffled(boolean shuffled) {
+		this.shuffled = shuffled;
 		fireChangedLocally();
 	}
 

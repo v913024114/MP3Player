@@ -1,10 +1,7 @@
 package com.mp3player.fx.test;
 
-import java.io.File;
-
 import com.mp3player.fx.app.PlayerWindow;
 import com.mp3player.playback.PlaybackEngine;
-import com.mp3player.vdp.RemoteFile;
 import com.mp3player.vdp.VDP;
 
 import javafx.application.Application;

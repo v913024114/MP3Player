@@ -186,7 +186,11 @@ public class FileDropOverlay {
 
 		if (button.getOnAction() != null) {
 			ActionEvent e = new ActionEvent(event, button);
-			button.getOnAction().handle(e);
+			try {
+				button.getOnAction().handle(e);
+			} catch(Exception exc) {
+				exc.printStackTrace();
+			}
 		}
 
 		hide();

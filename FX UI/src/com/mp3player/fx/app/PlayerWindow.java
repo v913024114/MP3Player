@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
@@ -20,7 +21,9 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.Slider;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -34,6 +37,8 @@ public class PlayerWindow implements Initializable {
 	private Stage stage;
 
 	@FXML private Menu currentSongMenu, settingsMenu;
+	@FXML private MenuBar menuBar;
+	@FXML private Slider volume;
 
 	private PlayerControl control;
 
@@ -56,6 +61,11 @@ public class PlayerWindow implements Initializable {
 		control.playingProperty().bindBidirectional(properties.playingProperty());
 		control.mediaSelectedProperty().bind(properties.mediaSelectedProperty());
 		control.playlistAvailableProperty().bind(properties.playlistAvailableProperty());
+		control.shuffledProperty().bindBidirectional(properties.shuffledProperty());
+		control.loopProperty().bindBidirectional(properties.loopProperty());
+		control.setOnNext(e -> properties.next());
+		control.setOnPrevious(e -> properties.previous());
+		control.setOnStop(e -> properties.stop());
 		root.setCenter(control);
 
 		FileDropOverlay overlay = new FileDropOverlay(root);
@@ -66,36 +76,44 @@ public class PlayerWindow implements Initializable {
 
 		stage.setTitle("MX Player");
 		stage.getIcons().add(new Image(getClass().getResource("window-icon.png").toExternalForm()));
+
+		stage.setOnHidden(e -> {
+			quit();
+		});
 	}
 
 	private List<ToggleButton> generateDropButtons(List<File> files) {
 		List<ToggleButton> result = new ArrayList<>(4);
 
+		List<File> audioFiles = AudioFiles.trim(files);
 		boolean cold = status.getPlaylist().isEmpty();
 
 		// Play / New Playlist
-		ToggleButton play = new ToggleButton("Play", loadIcon("../icons/Play_MouseOn.png", 32));
-		play.setOnAction(e -> play(files));
-		result.add(play);
+		if(!audioFiles.isEmpty()) {
+			ToggleButton play = new ToggleButton("Play", loadIcon("../icons/Play_MouseOn.png", 32));
+			play.setOnAction(e -> play(audioFiles, files.get(0)));
+			result.add(play);
+		}
 
 		// Play Folder
 		if(files.size() == 1) {
+			File file = files.get(0);
 			List<File> allAudioFiles = AudioFiles.allAudioFilesIn(files.get(0).getParentFile());
 			if(allAudioFiles.size() > 1) {
 				ToggleButton playFolder = new ToggleButton("Play folder", loadIcon("../icons/Shuffle_MouseOn.png", 32));
-				playFolder.setOnAction(e -> play(AudioFiles.allAudioFilesIn(files.get(0).getParentFile())));
+				playFolder.setOnAction(e -> play(allAudioFiles, AudioFiles.isAudioFile(file) ? file : allAudioFiles.get(0)));
 				result.add(playFolder);
 			}
 		}
 
 		// Add to Playlist
-		if(!cold) {
+		if(!cold && !audioFiles.isEmpty()) {
 			ToggleButton append = new ToggleButton("Add to playlist", loadIcon("../icons/Append_MouseOn.png", 32));
 			append.setOnAction(e -> {
-				List<RemoteFile> remoteFiles = files.stream().map(file -> status.getVdp().mountFile(file)).collect(Collectors.toList());
+				List<RemoteFile> remoteFiles = audioFiles.stream().map(file -> status.getVdp().mountFile(file)).collect(Collectors.toList());
 				String mediaID = status.getPlaylist().addAll(remoteFiles).get(0);
 				if(status.getPlayback().getCurrentMedia() == null) {
-					status.getTarget().setTargetMedia(mediaID, true);
+					status.getTarget().setTargetMedia(Optional.of(mediaID), true);
 				}
 			});
 			result.add(append);
@@ -105,10 +123,11 @@ public class PlayerWindow implements Initializable {
 		return result;
 	}
 
-	private void play(List<File> localFiles) {
+	private void play(List<File> localFiles, File startFile) {
+		int startIndex = localFiles.indexOf(startFile);
 		List<RemoteFile> remoteFiles = localFiles.stream().map(file -> status.getVdp().mountFile(file)).collect(Collectors.toList());
-		String mediaID = status.getPlaylist().setAll(remoteFiles).get(0);
-		status.getTarget().setTargetMedia(mediaID, true);
+		String mediaID = status.getPlaylist().setAll(remoteFiles).get(startIndex);
+		status.getTarget().setTargetMedia(Optional.of(mediaID), true);
 	}
 
 	@FXML
@@ -128,7 +147,12 @@ public class PlayerWindow implements Initializable {
 		settingsMenu.setGraphic(loadIcon("settings.png", 20));
 		currentSongMenu.setGraphic(loadIcon("file.png", 20));
 		currentSongMenu.textProperty().bind(properties.titleProperty());
+//		Tooltip menuTooltip = new Tooltip();
+//		menuTooltip.textProperty().bind(properties.titleProperty());
+//		menuBar.setTooltip(menuTooltip);
 		currentSongMenu.disableProperty().bind(properties.mediaSelectedProperty().not());
+
+		volume.valueProperty().bindBidirectional(properties.gainProperty());
 	}
 
 
@@ -144,5 +168,10 @@ public class PlayerWindow implements Initializable {
 
     public void show() {
 		stage.show();
+    }
+
+    @FXML
+    public void quit() {
+    	System.exit(0);
     }
 }

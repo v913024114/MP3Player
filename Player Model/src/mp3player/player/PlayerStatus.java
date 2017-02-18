@@ -58,5 +58,10 @@ public class PlayerStatus {
 		});
 	}
 
+	public Optional<RemoteFile> lookup(Optional<String> optionalMediaID) {
+		if(!optionalMediaID.isPresent()) return Optional.empty();
+		else return lookup(optionalMediaID.get());
+	}
+
 
 }

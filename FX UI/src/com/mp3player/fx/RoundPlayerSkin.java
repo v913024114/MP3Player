@@ -89,7 +89,7 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 
 		getChildren().add(repeatButton = new ToggleButton(null, loadIcon("icons/Repeat_MouseOff.png", 24, 24)));
 		getChildren().add(shuffleButton = new ToggleButton(null, loadIcon("icons/Shuffle_MouseOff.png", 24, 24)));
-		repeatButton.selectedProperty().bindBidirectional(getSkinnable().repeatProperty());
+		repeatButton.selectedProperty().bindBidirectional(getSkinnable().loopProperty());
 		shuffleButton.selectedProperty().bindBidirectional(getSkinnable().shuffledProperty());
 
 		Insets buttonMargins = new Insets(innerMargin);
@@ -112,8 +112,21 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 
 		playButton.disableProperty().bind(getSkinnable().mediaSelectedProperty().not());
 		stopButton.disableProperty().bind(getSkinnable().mediaSelectedProperty().not());
-		nextButton.disableProperty().bind(getSkinnable().mediaSelectedProperty().not().or(getSkinnable().playlistAvailableProperty().not()));
-		prevButton.disableProperty().bind(getSkinnable().mediaSelectedProperty().not().or(getSkinnable().playlistAvailableProperty().not()));
+		nextButton.disableProperty().bind(getSkinnable().playlistAvailableProperty().not());
+		prevButton.disableProperty().bind(getSkinnable().playlistAvailableProperty().not());
+
+		nextButton.setOnAction(e -> {
+			if(getSkinnable().getOnNext() != null)
+				getSkinnable().getOnNext().handle(e);
+		});
+		prevButton.setOnAction(e -> {
+			if(getSkinnable().getOnPrevious() != null)
+				getSkinnable().getOnPrevious().handle(e);
+		});
+		stopButton.setOnAction(e -> {
+			if(getSkinnable().getOnStop() != null)
+				getSkinnable().getOnStop().handle(e);
+		});
 	}
 
 	private void layoutButtons(double rad) {
