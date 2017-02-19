@@ -1,11 +1,9 @@
 package mp3player.player.data;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.mp3player.vdp.Conflict;
@@ -26,9 +24,7 @@ public class Playlist extends Distributed {
 
 	public static final String VDP_ID = "playlist";
 
-	private List<String> idList = new ArrayList<>();
-	private Map<String, String> mediaToPeer = new HashMap<>();
-	private Map<String, String> mediaToPath = new HashMap<>();
+	private List<Media> list = new ArrayList<>();
 
 	public Playlist() {
 		super(VDP_ID, true, false);
@@ -40,97 +36,94 @@ public class Playlist extends Distributed {
 		return null;
 	}
 
-	public List<String> getIDList() {
-		return idList;
+	public List<Media> list() {
+		return new ArrayList<>(list);
 	}
 
 	public int size() {
-		return idList.size();
+		return list.size();
 	}
 
-	public String getPeerID(String mediaID) throws IllegalArgumentException {
-		String result = mediaToPeer.get(mediaID);
-		if (result == null)
-			throw new IllegalArgumentException("media ID " + mediaID + " is not contained in playlist.");
-		return result;
-	}
-
-	public String getPath(String mediaID) throws IllegalArgumentException {
-		String result = mediaToPath.get(mediaID);
-		if (result == null)
-			throw new IllegalArgumentException("media ID " + mediaID + " is not contained in playlist.");
-		return result;
-	}
-
-	public Optional<String> first() {
+	public Optional<Media> first() {
 		if(isEmpty()) return Optional.empty();
-		return Optional.of(idList.get(0));
+		return Optional.of(list.get(0));
 	}
 
-	public Optional<String> last() {
+	public Optional<Media> last() {
 		if(isEmpty()) return Optional.empty();
-		return Optional.of(idList.get(idList.size()-1));
+		return Optional.of(list.get(size()-1));
 	}
 
-	public Optional<String> getNext(Optional<String> mediaID, boolean loop) throws IllegalArgumentException {
+	public Optional<Media> getNext(Optional<Media> current, boolean loop) throws IllegalArgumentException {
 		if(isEmpty()) return Optional.empty();
-		if(!mediaID.isPresent()) return first();
+		if(!current.isPresent()) return first();
 
-		int index = idList.indexOf(mediaID.get());
+		int index = list.indexOf(current.get());
 		if (index < 0)
-			throw new IllegalArgumentException("media ID " + mediaID.get() + " is not contained in playlist.");
+			throw new IllegalArgumentException("media ID " + current.get() + " is not contained in playlist.");
 		if (index < size() - 1)
-			return Optional.of(idList.get(index + 1));
+			return Optional.of(list.get(index + 1));
 		else if (loop)
 			return first();
 		else
 			return Optional.empty();
 	}
 
-	public Optional<String> getPrevious(Optional<String> mediaID, boolean loop) throws IllegalArgumentException {
+	public Optional<Media> getPrevious(Optional<Media> mediaID, boolean loop) throws IllegalArgumentException {
 		if(isEmpty()) return Optional.empty();
 		if(!mediaID.isPresent()) return first();
 
-		int index = idList.indexOf(mediaID.get());
+		int index = list.indexOf(mediaID.get());
 		if (index < 0)
 			throw new IllegalArgumentException("media ID " + mediaID.get() + " is not contained in playlist.");
 		if (index > 0)
-			return Optional.of(idList.get(index + -1));
+			return Optional.of(list.get(index + -1));
 		else if (loop)
 			return last();
 		else
 			return Optional.empty();
 	}
 
-	public List<String> setAll(List<RemoteFile> files) {
+	public Media setAll(List<RemoteFile> files, int returnIDIndex, boolean shuffle) {
 		_clear();
-		return addAll(files);
+		return addAll(files, returnIDIndex, shuffle);
 	}
 
-	public List<String> addAll(List<RemoteFile> files) {
-		List<String> ids = files.stream().map(file -> _add(file)).collect(Collectors.toList());
+	public Media addAll(List<RemoteFile> files, int returnIDIndex, boolean shuffle) {
+		List<Media> ids = files.stream().map(file -> _add(file)).collect(Collectors.toList());
+		Media returnID = returnIDIndex >= 0 ? ids.get(returnIDIndex) : null;
+		if(shuffle) _shuffle(Optional.of(returnID));
 		fireChangedLocally();
-		return ids;
+		return returnID;
 	}
 
-	private String _add(RemoteFile file) {
-		String id = UUID.randomUUID().toString();
-		idList.add(id);
-		mediaToPeer.put(id, file.getPeer().getID());
-		mediaToPath.put(id, file.getPath());
-		return id;
-	}
-
-	public String add(RemoteFile file) {
-		String id = _add(file);
+	public void shuffle(Optional<Media> makeFirst) {
+		_shuffle(makeFirst);
 		fireChangedLocally();
-		return id;
+	}
+
+	private void _shuffle(Optional<Media> makeFirst) {
+		Collections.shuffle(list);
+		makeFirst.ifPresent(first -> {
+			if(list.remove(first)) list.add(0, first);
+			else throw new IllegalArgumentException("makeFirst is not contained in playlist");
+		});
+	}
+
+	private Media _add(RemoteFile file) {
+		Media media = new Media(file.getPeer().getID(), file.getPath());
+		list.add(media);
+		return media;
+	}
+
+	public Media add(RemoteFile file) {
+		Media media = _add(file);
+		fireChangedLocally();
+		return media;
 	}
 
 	private void _clear() {
-		idList.clear();
-		mediaToPeer.clear();
-		mediaToPath.clear();
+		list.clear();
 	}
 
 	public void clear() {
@@ -139,7 +132,13 @@ public class Playlist extends Distributed {
 	}
 
 	public boolean isEmpty() {
-		return idList.isEmpty();
+		return list.isEmpty();
+	}
+
+	public void setAll(List<Media> newList) {
+		list.clear();
+		list.addAll(newList);
+		fireChangedLocally();
 	}
 
 }

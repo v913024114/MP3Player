@@ -28,8 +28,8 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 
 	// Buttons
 	private Group buttonRoot;
-	private ToggleButton playButton, repeatButton, shuffleButton;
-	private Button stopButton, prevButton, nextButton;
+	private ToggleButton playButton, loopButton, shuffleButton;
+	private Button stopButton, prevButton, nextButton, listButton, searchButton;
 	private double innerMargin = 2, outerMargin = 5;
 	private ImageView playIcon, pauseIcon;
 
@@ -55,7 +55,7 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 					return String.format("%d:%02d", min, sec);
 				} else {
 					int hrs = time / 60 / 60;
-					int min = (time - hrs*60) / 60;
+					int min = (time - hrs*60*60) / 60;
 					int sec = time - hrs*60*60 - min*60;
 					return String.format("%d:%02d:%02d", hrs, min, sec);
 				}
@@ -79,7 +79,6 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 		pauseIcon = loadIcon("icons/Pause_MouseOff.png", 32, 32);
 		buttonPane.setCenter(playButton = new ToggleButton(null, playIcon));
 		playButton.selectedProperty().bindBidirectional(getSkinnable().playingProperty());
-
 		getSkinnable().playingProperty().addListener((p,o,n) -> {
 			playButton.setGraphic(n ? pauseIcon : playIcon);
 		});
@@ -90,39 +89,27 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 		buttonPane.setBottom(bottomRoot);
 		BorderPane.setAlignment(bottomRoot, Pos.TOP_CENTER);
 
+		Insets buttonMargins = new Insets(innerMargin);
 		bottomButtonPane.setCenter(stopButton = new Button(null, loadIcon("icons/Stop_MouseOff.png", 18, 18)));
 		bottomButtonPane.setLeft(prevButton = new Button(null, loadIcon("icons/Previous_MouseOff.png", 24, 24)));
 		BorderPane.setAlignment(prevButton, Pos.TOP_RIGHT);
 		bottomButtonPane.setRight(nextButton = new Button(null, loadIcon("icons/Next_MouseOff.png", 24, 24)));
-
-		getChildren().add(repeatButton = new ToggleButton(null, loadIcon("icons/Repeat_MouseOff.png", 24, 24)));
-		getChildren().add(shuffleButton = new ToggleButton(null, loadIcon("icons/Shuffle_MouseOff.png", 24, 24)));
-		repeatButton.selectedProperty().bindBidirectional(getSkinnable().loopProperty());
-		shuffleButton.selectedProperty().bindBidirectional(getSkinnable().shuffledProperty());
-
-		Insets buttonMargins = new Insets(innerMargin);
 		BorderPane.setMargin(playButton, buttonMargins);
 		BorderPane.setMargin(stopButton, buttonMargins);
 		BorderPane.setMargin(prevButton, buttonMargins);
 		BorderPane.setMargin(nextButton, buttonMargins);
-
 		playButton.setPickOnBounds(false);
 		stopButton.setPickOnBounds(false);
 		prevButton.setPickOnBounds(false);
 		nextButton.setPickOnBounds(false);
-
 		playButton.setTooltip(new Tooltip("Play / Pause"));
 		stopButton.setTooltip(new Tooltip("Stop"));
 		prevButton.setTooltip(new Tooltip("Previous song"));
 		nextButton.setTooltip(new Tooltip("Next song"));
-		shuffleButton.setTooltip(new Tooltip("Shuffled playlist"));
-		repeatButton.setTooltip(new Tooltip("Repeat playlist"));
-
 		playButton.disableProperty().bind(getSkinnable().mediaSelectedProperty().not());
 		stopButton.disableProperty().bind(getSkinnable().mediaSelectedProperty().not());
 		nextButton.disableProperty().bind(getSkinnable().playlistAvailableProperty().not());
 		prevButton.disableProperty().bind(getSkinnable().playlistAvailableProperty().not());
-
 		nextButton.setOnAction(e -> {
 			if(getSkinnable().getOnNext() != null)
 				getSkinnable().getOnNext().handle(e);
@@ -136,6 +123,31 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 				getSkinnable().getOnStop().handle(e);
 		});
 
+		// Loop
+		getChildren().add(loopButton = new ToggleButton(null, loadIcon("icons/Repeat_MouseOff.png", 24, 24)));
+		loopButton.selectedProperty().bindBidirectional(getSkinnable().loopProperty());
+		loopButton.setTooltip(new Tooltip("Loop playlist"));
+
+		// Shuffle
+		getChildren().add(shuffleButton = new ToggleButton(null, loadIcon("icons/Shuffle_MouseOff.png", 24, 24)));
+		shuffleButton.selectedProperty().bindBidirectional(getSkinnable().shuffledProperty());
+		shuffleButton.setTooltip(new Tooltip("Shuffled playlist"));
+
+		// Playlist
+		getChildren().add(listButton = new Button(null, loadIcon("icons/Append_MouseOff.png", 24, 24)));
+		listButton.setOnAction(e -> {
+			if(getSkinnable().getOnShowPlaylist() != null)
+				getSkinnable().getOnShowPlaylist().handle(e);
+		});
+		listButton.setTooltip(new Tooltip("Show playlist"));
+
+		// Search
+		getChildren().add(searchButton = new Button(null, loadIcon("icons/Play_MouseOff.png", 24, 24)));
+		searchButton.setOnAction(e -> {
+			if(getSkinnable().getOnSearch() != null)
+				getSkinnable().getOnSearch().handle(e);
+		});
+		searchButton.setTooltip(new Tooltip("Search"));
 	}
 
 	private void layoutButtons(double rad) {
@@ -162,7 +174,7 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 	            double bottomInset, double leftInset) {
 	        return height;
 	    }
-//
+
 		@Override
 		protected double computeMinHeight(double width, double topInset, double rightInset, double bottomInset,
 				double leftInset) {
@@ -179,8 +191,10 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
     	layoutInArea(buttonRoot, contentX, contentY, contentWidth, contentHeight, 0, HPos.CENTER, VPos.CENTER);
 
     	double inset = 10;
-    	layoutInArea(repeatButton, contentX+inset, contentY+inset, contentWidth-2*inset, contentHeight-2*inset, 0, HPos.LEFT, VPos.BOTTOM);
+    	layoutInArea(loopButton, contentX+inset, contentY+inset, contentWidth-2*inset, contentHeight-2*inset, 0, HPos.LEFT, VPos.BOTTOM);
     	layoutInArea(shuffleButton, contentX+inset, contentY+inset, contentWidth-2*inset, contentHeight-2*inset, 0, HPos.RIGHT, VPos.BOTTOM);
+    	layoutInArea(listButton, contentX+inset, contentY+inset, contentWidth-2*inset, contentHeight-2*inset, 0, HPos.LEFT, VPos.TOP);
+    	layoutInArea(searchButton, contentX+inset, contentY+inset, contentWidth-2*inset, contentHeight-2*inset, 0, HPos.RIGHT, VPos.TOP);
     }
 
 

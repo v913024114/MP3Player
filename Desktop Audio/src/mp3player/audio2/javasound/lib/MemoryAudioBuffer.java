@@ -295,8 +295,6 @@ public class MemoryAudioBuffer implements AudioBuffer
 			int written = 0;
 			while(written < len) {
 				int arrayIndex = position / arraySize;
-				if(arrayIndex < 0)
-					System.err.println("Negative index");
 				int localPosition = position % arraySize;
 				int writing = Math.min(len-written, arraySize-localPosition);
 				System.arraycopy(data.get(arrayIndex), localPosition, b, written+off, writing);
@@ -308,7 +306,6 @@ public class MemoryAudioBuffer implements AudioBuffer
 
 		@Override
 		public synchronized void reset() {
-			System.out.println("Resetting");
 			position = mark;
 		}
 
@@ -324,7 +321,6 @@ public class MemoryAudioBuffer implements AudioBuffer
 			}
 
 			if(closed) {
-				System.out.println("Closed");
 				n = Math.min(n, available());
 			}
 

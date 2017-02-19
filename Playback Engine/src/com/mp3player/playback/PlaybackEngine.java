@@ -16,6 +16,7 @@ import mp3player.desktopaudio.LocalMediaFile;
 import mp3player.desktopaudio.MediaFile;
 import mp3player.desktopaudio.Player;
 import mp3player.player.PlayerStatus;
+import mp3player.player.data.Media;
 import mp3player.player.data.PlaybackStatus;
 import mp3player.player.data.PlayerTarget;
 
@@ -26,8 +27,8 @@ public class PlaybackEngine {
 	private AudioEngine audio;
 	private final List<String> supportedTypes;
 
-	private Optional<RemoteFile> currentMedia = Optional.empty(); // locally playing media
-	private Optional<String> currentMediaID = Optional.empty();
+	private Optional<RemoteFile> currentFile = Optional.empty(); // locally playing media
+	private Optional<Media> currentMediaID = Optional.empty();
 	private Player player;
 	private long lastPositionUpdate;
 	private AudioDevice device;
@@ -50,15 +51,6 @@ public class PlaybackEngine {
 	}
 
 
-	public void next() {
-		Optional<String> opNext = status.getPlaylist().getNext(currentMediaID, target.isLoop());
-		if(!opNext.equals(target.getTargetMedia())) {
-			target.setTargetMedia(opNext, true);
-		} else {
-			target.setTargetPosition(0, true);
-		}
-	}
-
 
 	private void targetChanged() {
 		if(containsDevice(target.getTargetDevice())) {
@@ -72,7 +64,7 @@ public class PlaybackEngine {
 	}
 
 	private void loadFile() {
-		if(!currentMedia.equals(status.lookup(target.getTargetMedia()))) {
+		if(!currentMediaID.equals(target.getTargetMedia())) {
 			// Change file
 
 			if(player != null) player.dispose();
@@ -80,13 +72,13 @@ public class PlaybackEngine {
 
 			publishInfo();
 
-			currentMedia = status.lookup(target.getTargetMedia());
 			currentMediaID = target.getTargetMedia();
+			currentFile = status.lookup(currentMediaID);
 
-			if(currentMedia.isPresent()) {
+			if(currentFile.isPresent()) {
 				MediaFile file;
-				if(currentMedia.get().getPeer().isLocal()) {
-					file = new LocalMediaFile(currentMedia.get().localFile());
+				if(currentFile.get().getPeer().isLocal()) {
+					file = new LocalMediaFile(currentFile.get().localFile());
 				} else {
 					// TODO copy to local
 					throw new UnsupportedOperationException("file copying not supported yet");
@@ -97,7 +89,7 @@ public class PlaybackEngine {
 					player.activate(audio.getDefaultDevice());
 					player.setMute(mute);
 					player.setGain(gain);
-					player.addEndOfMediaListener(e -> next());
+					player.addEndOfMediaListener(e -> status.next());
 					if(player.getDuration() < 0) {
 						new Thread(() -> {
 							try {

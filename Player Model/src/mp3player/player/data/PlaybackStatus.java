@@ -23,7 +23,7 @@ public class PlaybackStatus extends Distributed {
 	private String device;
 	private List<String> supportedFormats = Collections.emptyList();
 
-	private Optional<String> currentMedia = Optional.empty(); // media ID
+	private Optional<Media> currentMedia = Optional.empty(); // media ID
 
 	private double gain, minGain, maxGain;
 	private boolean mute;
@@ -46,7 +46,7 @@ public class PlaybackStatus extends Distributed {
 		return null;
 	}
 
-	public void setStatus(String device, List<String> supportedFormats, Optional<String> currentMedia, double gain,
+	public void setStatus(String device, List<String> supportedFormats, Optional<Media> currentMedia, double gain,
 			double minGain, double maxGain, boolean mute, boolean playing, boolean busy, String busyText,
 			double lastKnownPosition, long lastUpdateTime, double duration) {
 		if(currentMedia == null) throw new IllegalArgumentException("currentMedia = null");
@@ -83,7 +83,7 @@ public class PlaybackStatus extends Distributed {
 		return device;
 	}
 
-	public Optional<String> getCurrentMedia() {
+	public Optional<Media> getCurrentMedia() {
 		return currentMedia;
 	}
 

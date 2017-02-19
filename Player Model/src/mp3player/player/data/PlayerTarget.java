@@ -24,7 +24,7 @@ public class PlayerTarget extends Distributed {
 	/**
 	 * if empty, dispose of player
 	 */
-	private Optional<String> targetMedia = Optional.empty();
+	private Optional<Media> targetMedia = Optional.empty();
 
 	private double targetGain;
 	private boolean targetMute;
@@ -56,11 +56,15 @@ public class PlayerTarget extends Distributed {
 		fireChangedLocally();
 	}
 
-	public Optional<String> getTargetMedia() {
+	public Optional<Media> getTargetMedia() {
 		return targetMedia;
 	}
 
-	public void setTargetMedia(Optional<String> targetMedia, boolean startPlayingImmediately) {
+	public void setTargetMedia(Media targetMedia, boolean startPlayingImmediately) {
+		setTargetMedia(Optional.of(targetMedia), startPlayingImmediately);
+	}
+
+	public void setTargetMedia(Optional<Media> targetMedia, boolean startPlayingImmediately) {
 		this.targetMedia = targetMedia;
 		if (startPlayingImmediately) {
 			targetPlaying = true;
@@ -107,6 +111,7 @@ public class PlayerTarget extends Distributed {
 	}
 
 	public void setTargetPosition(double targetPosition, boolean startPlaying) {
+		if(targetPosition < 0) throw new IllegalArgumentException("position < 0");
 		this.targetPosition = OptionalDouble.of(targetPosition);
 		positionUpdateTime = System.currentTimeMillis();
 		if(startPlaying) {

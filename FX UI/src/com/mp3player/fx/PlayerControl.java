@@ -147,6 +147,16 @@ public class PlayerControl extends Control {
     public void setOnStop(EventHandler<ActionEvent> value) { onStop.setValue(value); }
     public ObjectProperty<EventHandler<ActionEvent>> onStopProperty() { return onStop; }
 
+    private ObjectProperty<EventHandler<ActionEvent>> onShowPlaylist = new SimpleObjectProperty<>();
+    public EventHandler<ActionEvent> getOnShowPlaylist() { return onShowPlaylist.get(); }
+    public void setOnShowPlaylist(EventHandler<ActionEvent> value) { onShowPlaylist.setValue(value); }
+    public ObjectProperty<EventHandler<ActionEvent>> onShowPlaylistProperty() { return onShowPlaylist; }
+
+    private ObjectProperty<EventHandler<ActionEvent>> onSearch = new SimpleObjectProperty<>();
+    public EventHandler<ActionEvent> getOnSearch() { return onSearch.get(); }
+    public void setOnSearch(EventHandler<ActionEvent> value) { onSearch.setValue(value); }
+    public ObjectProperty<EventHandler<ActionEvent>> onSearchProperty() { return onSearch; }
+
 
 	public PlayerControl() {
 		getStyleClass().add("time-slider");

@@ -1,7 +1,6 @@
 package com.mp3player.fx.app;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -22,7 +21,10 @@ import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import mp3player.player.PlayerStatus;
+import mp3player.player.data.Media;
 
 public class PlayerStatusWrapper {
 	private PlayerStatus status;
@@ -77,6 +79,9 @@ public class PlayerStatusWrapper {
 	public void setShuffled(boolean value) { shuffled.set(value); }
 	public BooleanProperty shuffledProperty() { return shuffled; }
 
+	private ObservableList<Media> playlist;
+	public ObservableList<Media> getPlaylist() { return playlist; }
+
 
 	public PlayerStatusWrapper(PlayerStatus status) {
 		this.status = status;
@@ -84,7 +89,10 @@ public class PlayerStatusWrapper {
 		playing = new DistributedBooleanProperty("playing", this,
 				status.getPlayback(),
 				() -> status.getPlayback().isPlaying(),
-				newValue -> status.getTarget().setTargetPlaying(newValue));
+				newValue -> {
+					if(!status.getPlayback().getCurrentMedia().isPresent() && !status.getPlaylist().isEmpty()) status.next();
+					else status.getTarget().setTargetPlaying(newValue);
+					});
 
 		duration = new DistributedDoubleProperty("duration", this,
 				status.getPlayback(),
@@ -95,7 +103,7 @@ public class PlayerStatusWrapper {
 				status.getPlayback(),
 				() -> {
 					if(status.getPlayback().getBusyText() != null) return status.getPlayback().getBusyText();
-					return status.lookup(status.getPlayback().getCurrentMedia()).map(f -> f.getName()).orElse(noMediaText);
+					return status.getPlayback().getCurrentMedia().map(m -> m.toString()).orElse(noMediaText);
 					});
 
 		mediaSelected = new DistributedBooleanProperty("mediaSelected", this,
@@ -111,7 +119,9 @@ public class PlayerStatusWrapper {
 		position = new DistributedDoubleProperty("position", this,
 				status.getPlayback(),
 				() -> status.getPlayback().getCurrentPosition(),
-				newValue -> status.getTarget().setTargetPosition(newValue, true)) {
+				newValue -> {
+					if(newValue >= 0) status.getTarget().setTargetPosition(newValue, true);
+				}) {
 			@Override
 			public double get() {
 				return status.getPlayback().getCurrentPosition();
@@ -141,24 +151,20 @@ public class PlayerStatusWrapper {
 		shuffled = new DistributedBooleanProperty("shuffled", this,
 				status.getTarget(),
 				() -> status.getTarget().isShuffled(),
-				newValue -> status.getTarget().setShuffled(newValue));
+				newValue -> {
+					status.getTarget().setShuffled(newValue);
+					status.getPlaylist().shuffle(status.getPlayback().getCurrentMedia());
+				});
+
+		playlist = FXCollections.observableArrayList();
+		status.getPlaylist().addDataChangeListener(e -> {
+			Platform.runLater(() -> playlist.setAll(status.getPlaylist().list()));
+		});
 	}
 
 
 	public PlayerStatus getStatus() {
 		return status;
-	}
-
-	public void next() {
-		Optional<String> current = status.getPlayback().getCurrentMedia();
-		Optional<String> next = status.getPlaylist().getNext(current, status.getTarget().isLoop());
-		status.getTarget().setTargetMedia(next, true);
-	}
-
-	public void previous() {
-		Optional<String> current = status.getPlayback().getCurrentMedia();
-		Optional<String> previous = status.getPlaylist().getPrevious(current, status.getTarget().isLoop());
-		status.getTarget().setTargetMedia(previous, true);
 	}
 
 	public void stop() {

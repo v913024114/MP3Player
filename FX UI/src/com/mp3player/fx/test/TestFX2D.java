@@ -54,8 +54,8 @@ public class TestFX2D extends Application {
         		player.setPlaying(!player.isPlaying());
         	});
         	cm.addCombination(new MediaCommand[]{ MediaCommand.STOP }, c -> player.stop() );
-        	cm.addCombination(new MediaCommand[]{ MediaCommand.NEXT }, c -> player.next() );
-        	cm.addCombination(new MediaCommand[]{ MediaCommand.PREVIOUS }, c -> player.previous() );
+        	cm.addCombination(new MediaCommand[]{ MediaCommand.NEXT }, c -> player.getStatus().next() );
+        	cm.addCombination(new MediaCommand[]{ MediaCommand.PREVIOUS }, c -> player.getStatus().previous() );
 
         	MediaCommand[] playCombination = new MediaCommand[]{ MediaCommand.VOLUME_UP, MediaCommand.VOLUME_DOWN};
         	MediaCommand[] monitorOffCombination = new MediaCommand[]{ MediaCommand.VOLUME_DOWN, MediaCommand.VOLUME_UP};
@@ -70,8 +70,8 @@ public class TestFX2D extends Application {
         		LocalMachine machine = LocalMachine.getLocalMachine();
         		if(machine != null) machine.turnOffMonitors();
         	});
-        	cm.addCombination(nextCombination, c -> player.next());
-        	cm.addCombination(previousCombination, c -> player.previous());
+        	cm.addCombination(nextCombination, c -> player.getStatus().next());
+        	cm.addCombination(previousCombination, c -> player.getStatus().previous());
         	cm.addCombination(deleteCombination, c -> System.out.println("Delete not implemented yet"));
         }
 	}
