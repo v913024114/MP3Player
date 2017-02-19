@@ -8,6 +8,8 @@ import javafx.animation.FadeTransition;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.HPos;
 import javafx.geometry.Point2D;
 import javafx.geometry.VPos;
@@ -50,8 +52,9 @@ public class CircularSliderSkin extends SkinBase<CircularSlider> {
     // Ticks
     private List<TimeTick> ticks;
     private Group tickGroup;
-    private Timeline buildAnimation = new Timeline();
     private double tickScale = 0.0005;
+    private Duration tickAnimationLength = new Duration(1000);
+    private DoubleProperty currentTickOpacy;
 
     // Bar
     private Region styledBarBox;
@@ -316,15 +319,25 @@ public class CircularSliderSkin extends SkinBase<CircularSlider> {
     }
 
     private void rebuildTicks() {
-        for(TimeTick tick : ticks) {
-            tickGroup.getChildren().remove(tick.getNode());
-        }
+    	// Fade old
+    	if(currentTickOpacy != null) {
+    		List<TimeTick> oldTicks = new ArrayList<>(ticks);
+    		Timeline fadeOut = new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(currentTickOpacy, 1)),
+                    new KeyFrame(tickAnimationLength, new KeyValue(currentTickOpacy, 0)));
+    		fadeOut.play();
+    		fadeOut.setOnFinished(e -> {
+    			tickGroup.getChildren().removeAll(oldTicks);
+    		});
+    	}
+
         ticks.clear();
 
         double min = getSkinnable().getMin();
         double max = getSkinnable().getMax();
         double majorUnit = getSkinnable().getMajorTickUnit();
         double minorUnit = getSkinnable().getMajorTickUnit() / getSkinnable().getMinorTickCount();
+
+        currentTickOpacy = new SimpleDoubleProperty();
 
         for(double pos = Math.ceil(min / minorUnit) * minorUnit; pos < max; pos += minorUnit) {
             boolean major = isInt(pos/majorUnit, 1e-6);
@@ -336,18 +349,15 @@ public class CircularSliderSkin extends SkinBase<CircularSlider> {
             tick.fitBounds(barWidth/barRadius);
             ticks.add(tick);
             tick.updatePosition(min, max);
+            tick.getNode().opacityProperty().bind(currentTickOpacy);
             tickGroup.getChildren().add(tick.getNode());
         }
 
         updateTickVisibility();
 
-
-        if(buildAnimation != null && buildAnimation.getStatus() == Timeline.Status.RUNNING) {
-            buildAnimation.stop();
-        }
-        buildAnimation = new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(tickGroup.opacityProperty(), 0)),
-                new KeyFrame(new Duration(1000), new KeyValue(tickGroup.opacityProperty(), 1)));
-        buildAnimation.play();
+        Timeline fadeIn = new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(currentTickOpacy, 0)),
+                new KeyFrame(tickAnimationLength, new KeyValue(currentTickOpacy, 1)));
+        fadeIn.play();
 
         foregroundMask.toFront();
     }
