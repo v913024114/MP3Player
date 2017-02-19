@@ -84,15 +84,19 @@ public class Playlist extends Distributed {
 			return Optional.empty();
 	}
 
-	public Media setAll(List<RemoteFile> files, int returnIDIndex, boolean shuffle) {
+	public Media setAll(List<RemoteFile> files, int returnIDIndex, boolean shuffle, boolean firstStayFirst) {
 		_clear();
-		return addAll(files, returnIDIndex, shuffle);
+		List<Media> newList = files.stream().map(file -> _add(file)).collect(Collectors.toList());
+		Media returnID = returnIDIndex >= 0 ? newList.get(returnIDIndex) : null;
+		if(shuffle) _shuffle(Optional.of(returnID));
+		fireChangedLocally();
+		return returnID;
 	}
 
-	public Media addAll(List<RemoteFile> files, int returnIDIndex, boolean shuffle) {
-		List<Media> ids = files.stream().map(file -> _add(file)).collect(Collectors.toList());
-		Media returnID = returnIDIndex >= 0 ? ids.get(returnIDIndex) : null;
-		if(shuffle) _shuffle(Optional.of(returnID));
+	public Media addAll(List<RemoteFile> files, int returnIDIndex, boolean shuffle, Optional<Media> shuffleToFirst) {
+		List<Media> newList = files.stream().map(file -> _add(file)).collect(Collectors.toList());
+		Media returnID = returnIDIndex >= 0 ? newList.get(returnIDIndex) : null;
+		if(shuffle) _shuffle(shuffleToFirst);
 		fireChangedLocally();
 		return returnID;
 	}

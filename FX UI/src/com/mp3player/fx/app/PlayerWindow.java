@@ -17,6 +17,7 @@ import com.mp3player.vdp.RemoteFile;
 import javafx.animation.FadeTransition;
 import javafx.animation.TranslateTransition;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -34,6 +35,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
@@ -151,7 +153,7 @@ public class PlayerWindow implements Initializable {
 			ToggleButton append = new ToggleButton("Add to playlist", loadIcon("../icons/Append_MouseOn.png", 32));
 			append.setOnAction(e -> {
 				List<RemoteFile> remoteFiles = audioFiles.stream().map(file -> status.getVdp().mountFile(file)).collect(Collectors.toList());
-				Media mediaID = status.getPlaylist().addAll(remoteFiles, 0, status.getTarget().isShuffled());
+				Media mediaID = status.getPlaylist().addAll(remoteFiles, 0, status.getTarget().isShuffled(), status.getPlayback().getCurrentMedia());
 				if(status.getPlayback().getCurrentMedia() == null) {
 					status.getTarget().setTargetMedia(mediaID, true);
 				}
@@ -177,7 +179,7 @@ public class PlayerWindow implements Initializable {
 	private void play(List<File> localFiles, File startFile) {
 		int startIndex = localFiles.indexOf(startFile);
 		List<RemoteFile> remoteFiles = localFiles.stream().map(file -> status.getVdp().mountFile(file)).collect(Collectors.toList());
-		Media mediaID = status.getPlaylist().setAll(remoteFiles, startIndex, status.getTarget().isShuffled());
+		Media mediaID = status.getPlaylist().setAll(remoteFiles, startIndex, status.getTarget().isShuffled(), true);
 		status.getTarget().setTargetMedia(mediaID, true);
 	}
 
@@ -213,6 +215,7 @@ public class PlayerWindow implements Initializable {
 
 	public void showPlaylist() {
 		fadeIn(playlistRoot);
+		playlist.requestFocus();
 	}
     @FXML
     public void closePlaylist() {
@@ -257,6 +260,17 @@ public class PlayerWindow implements Initializable {
 			// Initialize playlist view
 			playlist.setItems(properties.getPlaylist());
 			removeOthersButton.disableProperty().bind(properties.playlistAvailableProperty().not());
+			playlist.getSelectionModel().selectedItemProperty().addListener((p,o,n) -> {
+				if(n != null) properties.setCurrentMedia(Optional.ofNullable(n));
+			});
+			properties.currentMediaProperty().addListener((p,o,n) -> {
+				playlist.getSelectionModel().select(properties.getCurrentMedia().orElse(null));
+			});
+			playlist.setOnMouseReleased(e -> {
+				if(e.getButton() == MouseButton.PRIMARY) {
+					Platform.runLater(() -> closePlaylist());
+				}
+			});
 		}
 		else {
 			// Initialize search view
@@ -287,6 +301,7 @@ public class PlayerWindow implements Initializable {
     public void clearPlaylist() {
     	status.getTarget().setTargetMedia(Optional.empty(), false);
     	status.getPlaylist().clear();
+    	closePlaylist();
     }
 
     @FXML

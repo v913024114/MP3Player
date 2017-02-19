@@ -1,6 +1,7 @@
 package com.mp3player.fx.app;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -16,6 +17,7 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyStringProperty;
@@ -81,6 +83,12 @@ public class PlayerStatusWrapper {
 
 	private ObservableList<Media> playlist;
 	public ObservableList<Media> getPlaylist() { return playlist; }
+
+	private ObjectProperty<Optional<Media>> currentMedia;
+	public Optional<Media> getCurrentMedia() { return currentMedia.get(); }
+	public void setCurrentMedia(Optional<Media> value) { currentMedia.set(value); }
+	public ObjectProperty<Optional<Media>> currentMediaProperty() { return currentMedia; }
+
 
 
 	public PlayerStatusWrapper(PlayerStatus status) {
@@ -160,6 +168,11 @@ public class PlayerStatusWrapper {
 		status.getPlaylist().addDataChangeListener(e -> {
 			Platform.runLater(() -> playlist.setAll(status.getPlaylist().list()));
 		});
+
+		currentMedia = new DistributedObjectProperty<>("currentMedia", this,
+				status.getPlayback(),
+				() -> status.getPlayback().getCurrentMedia(),
+				newValue -> status.getTarget().setTargetMedia(newValue, true));
 	}
 
 
@@ -441,4 +454,94 @@ public class PlayerStatusWrapper {
 		}
 	}
 
+	private static class DistributedObjectProperty<T> extends ObjectProperty<T>
+	{
+		private String name;
+		private Object bean;
+
+		private Supplier<T> getter;
+		private Consumer<T> setter;
+		private T lastValue;
+
+		private List<ChangeListener<? super T>> changeListeners = new CopyOnWriteArrayList<>();
+		private List<InvalidationListener> invalidationListeners = new CopyOnWriteArrayList<>();
+
+
+		public DistributedObjectProperty(String name, Object bean, Distributed distributed, Supplier<T> getter,
+				Consumer<T> setter) {
+			this.name = name;
+			this.bean = bean;
+			this.getter = getter;
+			this.setter = setter;
+			invalidated();
+			register(distributed);
+		}
+
+		private void register(Distributed distributed) {
+			distributed.addDataChangeListener(e -> Platform.runLater(() -> invalidated()));
+		}
+
+		protected void invalidated() {
+			T newValue = getter.get();
+			if(newValue.equals(lastValue)) return;
+			T oldValue = lastValue;
+			lastValue = newValue;
+			fireChangedInvalidated(oldValue, newValue);
+		}
+
+		protected void fireChangedInvalidated(T oldValue, T newValue) {
+			for(ChangeListener<? super T> l : changeListeners) {
+				l.changed(this, oldValue, newValue);
+			}
+			for(InvalidationListener l : invalidationListeners) {
+				l.invalidated(this);
+			}
+		}
+
+
+		@Override
+		public void bind(ObservableValue<? extends T> observable) {
+			throw new UnsupportedOperationException();
+		}
+		@Override
+		public void unbind() {
+			return;
+		}
+		@Override
+		public boolean isBound() {
+			return false;
+		}
+		@Override
+		public Object getBean() {
+			return bean;
+		}
+		@Override
+		public String getName() {
+			return name;
+		}
+		@Override
+		public void addListener(ChangeListener<? super T> listener) {
+			changeListeners.add(listener);
+		}
+		@Override
+		public void removeListener(ChangeListener<? super T> listener) {
+			changeListeners.remove(listener);
+		}
+		@Override
+		public void addListener(InvalidationListener listener) {
+			invalidationListeners.add(listener);
+		}
+		@Override
+		public void removeListener(InvalidationListener listener) {
+			invalidationListeners.remove(listener);
+		}
+		@Override
+		public T get() {
+			return lastValue;
+		}
+		@Override
+		public void set(T value) {
+			if(!lastValue.equals(value)) setter.accept(value);
+		}
+	}
 }
