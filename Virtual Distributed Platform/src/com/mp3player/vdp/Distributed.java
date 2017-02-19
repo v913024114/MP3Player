@@ -19,7 +19,7 @@ import java.util.function.Consumer;
  * When a distributed object is changed locally, it must call
  * {@link #fireChangedLocally()} which triggers the synchronization process.
  * After each change (by the local peer or a connected peer) all
- * <code>changeListeners</code> receive a {@link DataChangeEvent}.
+ * <code>changeListeners</code> receive a {@link DataEvent}.
  * </p>
  * <p>
  * The synchronization is implemented using serialization to transfer the data
@@ -55,7 +55,7 @@ public abstract class Distributed implements Serializable {
 	 * {@link #copyNonTransientFieldsFrom(Distributed)} is called after
 	 * deserialization before listeners are informed.
 	 */
-	private transient List<Consumer<DataChangeEvent>> changeListeners = new CopyOnWriteArrayList<>();
+	private transient List<Consumer<DataEvent>> changeListeners = new CopyOnWriteArrayList<>();
 	/**
 	 * Associated VDP, set when {@link VDP#putData(Distributed)} is invoked.
 	 */
@@ -68,6 +68,11 @@ public abstract class Distributed implements Serializable {
 	 *
 	 * @param id
 	 *            unique data ID with which the object can be found
+	 * @param permanent
+	 *            whether the data should be saved to file
+	 * @param ownerBound
+	 *            whether the data is only valid as long as it's owner is
+	 *            available
 	 */
 	public Distributed(String id, boolean permanent, boolean ownerBound) {
 		this.id = id;
@@ -89,16 +94,16 @@ public abstract class Distributed implements Serializable {
 	 */
 	public abstract Distributed resolveConflict(Conflict conflict);
 
-	void _fireChanged(DataChangeEvent e) {
-		for (Consumer<DataChangeEvent> l : changeListeners)
+	void _fireChanged(DataEvent e) {
+		for (Consumer<DataEvent> l : changeListeners)
 			l.accept(e);
 	}
 
 	/**
 	 * This method must be called by inheriting classes after a modification to
 	 * the data has been performed. If this object is bound to a {@link VDP}, it
-	 * triggers the synchronization process and fires {@link DataChangeEvent}s
-	 * to all <code>changeListeners</code> at all peers.
+	 * triggers the synchronization process and fires {@link DataEvent}s to all
+	 * <code>changeListeners</code> at all peers.
 	 *
 	 * @see #addDataChangeListener(Consumer)
 	 */
@@ -106,8 +111,8 @@ public abstract class Distributed implements Serializable {
 		if (vdp != null)
 			vdp.changed(this);
 		else {
-			DataChangeEvent e = new DataChangeEvent(null, null, System.currentTimeMillis(), System.currentTimeMillis());
-			for (Consumer<DataChangeEvent> l : changeListeners)
+			DataEvent e = new DataEvent(this, null, null, System.currentTimeMillis(), System.currentTimeMillis());
+			for (Consumer<DataEvent> l : changeListeners)
 				l.accept(e);
 		}
 	}
@@ -120,7 +125,7 @@ public abstract class Distributed implements Serializable {
 	 * @param l
 	 *            listener
 	 */
-	public void addDataChangeListener(Consumer<DataChangeEvent> l) {
+	public void addDataChangeListener(Consumer<DataEvent> l) {
 		changeListeners.add(l);
 	}
 
@@ -130,7 +135,7 @@ public abstract class Distributed implements Serializable {
 	 * @param l
 	 *            listener to remove
 	 */
-	public void removeDataChangeListener(Consumer<DataChangeEvent> l) {
+	public void removeDataChangeListener(Consumer<DataEvent> l) {
 		changeListeners.remove(l);
 	}
 

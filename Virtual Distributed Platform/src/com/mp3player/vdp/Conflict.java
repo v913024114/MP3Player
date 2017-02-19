@@ -2,10 +2,10 @@ package com.mp3player.vdp;
 
 public class Conflict {
 	private Distributed local, remote;
-	private DataChangeEvent lastLocalChange, lastRemoteChange;
+	private DataEvent lastLocalChange, lastRemoteChange;
 
-	public Conflict(Distributed local, Distributed remote, DataChangeEvent lastLocalChange,
-			DataChangeEvent lastRemoteChange) {
+	public Conflict(Distributed local, Distributed remote, DataEvent lastLocalChange,
+			DataEvent lastRemoteChange) {
 		this.local = local;
 		this.remote = remote;
 		this.lastLocalChange = lastLocalChange;
@@ -27,7 +27,7 @@ public class Conflict {
 	 *
 	 * @return the last change of the local data object
 	 */
-	public DataChangeEvent getLastLocalChange() {
+	public DataEvent getLastLocalChange() {
 		return lastLocalChange;
 	}
 
@@ -39,7 +39,7 @@ public class Conflict {
 	 *
 	 * @return the last change of the remote data object
 	 */
-	public DataChangeEvent getLastRemoteChange() {
+	public DataEvent getLastRemoteChange() {
 		return lastRemoteChange;
 	}
 

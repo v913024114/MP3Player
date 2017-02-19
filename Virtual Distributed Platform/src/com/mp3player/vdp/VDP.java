@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
@@ -24,8 +25,8 @@ import com.mp3player.vdp.internal.LocalPeer;
 public class VDP {
 	private LocalPeer localPeer;
 
-	private Consumer<ConnectionEvent> onPeerConnected, onPeerDisconnected;
-	private Consumer<Distributed> onDataAdded, onDataRemoved;
+	private List<ConnectionListener> connectionListeners = new CopyOnWriteArrayList<>();
+	private List<DataListener> dataListeners = new CopyOnWriteArrayList<>();
 	private Consumer<Serializable> onMessageReceived;
 
 	private Map<String, Distributed> localData = new HashMap<>();
@@ -57,8 +58,7 @@ public class VDP {
 	 * @throws IOException
 	 *             if the address cannot be connected to
 	 * @see #disconnectFromMulticastAddress(String)
-	 * @see #setOnPeerConnected(Consumer)
-	 * @see #setOnPeerDisconnected(Consumer)
+	 * @see #addConnectionListener(ConnectionListener)
 	 */
 	public void connectToMulticastAddress(String multicastAddress) throws IOException {
 
@@ -134,6 +134,10 @@ public class VDP {
 		data.vdp = this;
 
 		localData.put(data.getID(), data);
+
+		long time = System.currentTimeMillis();
+		DataEvent e = new DataEvent(data, localPeer, localPeer, time, time);
+		dataListeners.forEach(l -> l.onDataAdded(e));
 	}
 
 	public void removeData(Distributed data) {
@@ -141,6 +145,18 @@ public class VDP {
 			throw new IllegalArgumentException();
 		data.vdp = null;
 
+		long time = System.currentTimeMillis();
+		DataEvent e = new DataEvent(data, localPeer, localPeer, time, time);
+		dataListeners.forEach(l -> l.onDataRemoved(e));
+	}
+
+	void changed(Distributed data) {
+		eventHandler.execute(() -> {
+			long time = System.currentTimeMillis();
+			DataEvent e = new DataEvent(data, localPeer, localPeer, time, time);
+			dataListeners.forEach(l -> l.onDataAdded(e));
+			data._fireChanged(e);
+		});
 	}
 
 	public Optional<Distributed> getData(String id) {
@@ -190,43 +206,20 @@ public class VDP {
 		return null;
 	}
 
-	void changed(Distributed distributed) {
-		eventHandler.execute(() -> {
-			DataChangeEvent e = new DataChangeEvent(localPeer, localPeer, System.currentTimeMillis(), System.currentTimeMillis());
-			distributed._fireChanged(e);
-		});
+	public void addConnectionListener(ConnectionListener l) {
+		connectionListeners.add(l);
 	}
 
-	public Consumer<ConnectionEvent> getOnPeerConnected() {
-		return onPeerConnected;
+	public void removeConnectionListener(ConnectionListener l) {
+		connectionListeners.remove(l);
 	}
 
-	public void setOnPeerConnected(Consumer<ConnectionEvent> onPeerConnected) {
-		this.onPeerConnected = onPeerConnected;
+	public void addDataListener(DataListener l) {
+		dataListeners.add(l);
 	}
 
-	public Consumer<ConnectionEvent> getOnPeerDisconnected() {
-		return onPeerDisconnected;
-	}
-
-	public void setOnPeerDisconnected(Consumer<ConnectionEvent> onPeerDisconnected) {
-		this.onPeerDisconnected = onPeerDisconnected;
-	}
-
-	public Consumer<Distributed> getOnDataAdded() {
-		return onDataAdded;
-	}
-
-	public void setOnDataAdded(Consumer<Distributed> onDataAdded) {
-		this.onDataAdded = onDataAdded;
-	}
-
-	public Consumer<Distributed> getOnDataRemoved() {
-		return onDataRemoved;
-	}
-
-	public void setOnDataRemoved(Consumer<Distributed> onDataRemoved) {
-		this.onDataRemoved = onDataRemoved;
+	public void removeDataListener(DataListener l) {
+		dataListeners.remove(l);
 	}
 
 	public Consumer<Serializable> getOnMessageReceived() {

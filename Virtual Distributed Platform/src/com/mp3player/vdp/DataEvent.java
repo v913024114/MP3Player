@@ -1,17 +1,24 @@
 package com.mp3player.vdp;
 
-public class DataChangeEvent {
+public class DataEvent {
+	private Distributed data;
 	private Peer editingClient;
 	private Peer localClient;
 	private long sourceTime;
 	private long timeReceived;
 
 
-	public DataChangeEvent(Peer editingClient, Peer localClient, long sourceTime, long timeReceived) {
+	public DataEvent(Distributed data, Peer editingClient, Peer localClient, long sourceTime, long timeReceived) {
+		this.data = data;
 		this.editingClient = editingClient;
 		this.localClient = localClient;
 		this.sourceTime = sourceTime;
 		this.timeReceived = timeReceived;
+	}
+
+
+	public Distributed getData() {
+		return data;
 	}
 
 
