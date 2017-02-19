@@ -20,12 +20,12 @@ public class PlaybackStatus extends Distributed {
 
 	public static final String VDP_ID = "playback-status";
 
-	private String device;
+	private Optional<Speaker> device = Optional.empty();
 	private List<String> supportedFormats = Collections.emptyList();
 
 	private Optional<Media> currentMedia = Optional.empty(); // media ID
 
-	private double gain, minGain, maxGain;
+	private double gain;
 	private boolean mute;
 
 	private boolean playing;
@@ -46,8 +46,8 @@ public class PlaybackStatus extends Distributed {
 		return null;
 	}
 
-	public void setStatus(String device, List<String> supportedFormats, Optional<Media> currentMedia, double gain,
-			double minGain, double maxGain, boolean mute, boolean playing, boolean busy, String busyText,
+	public void setStatus(Optional<Speaker> device, List<String> supportedFormats, Optional<Media> currentMedia, double gain,
+			boolean mute, boolean playing, boolean busy, String busyText,
 			double lastKnownPosition, long lastUpdateTime, double duration) {
 		if(currentMedia == null) throw new IllegalArgumentException("currentMedia = null");
 		if(supportedFormats == null) throw new IllegalArgumentException("supportedFormats = null");
@@ -55,8 +55,6 @@ public class PlaybackStatus extends Distributed {
 		this.supportedFormats = supportedFormats;
 		this.currentMedia = currentMedia;
 		this.gain = gain;
-		this.minGain = minGain;
-		this.maxGain = maxGain;
 		this.mute = mute;
 		this.playing = playing;
 		this.busy = busy;
@@ -79,7 +77,7 @@ public class PlaybackStatus extends Distributed {
 		return lastKnownPosition + (System.currentTimeMillis() - lastUpdateTime) / 1e3;
 	}
 
-	public String getDevice() {
+	public Optional<Speaker> getDevice() {
 		return device;
 	}
 
@@ -93,14 +91,6 @@ public class PlaybackStatus extends Distributed {
 
 	public double getGain() {
 		return gain;
-	}
-
-	public double getMinGain() {
-		return minGain;
-	}
-
-	public double getMaxGain() {
-		return maxGain;
 	}
 
 	public boolean isMute() {

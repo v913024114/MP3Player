@@ -16,9 +16,11 @@ import mp3player.desktopaudio.LocalMediaFile;
 import mp3player.desktopaudio.MediaFile;
 import mp3player.desktopaudio.Player;
 import mp3player.player.PlayerStatus;
+import mp3player.player.data.MachineInfo;
 import mp3player.player.data.Media;
 import mp3player.player.data.PlaybackStatus;
 import mp3player.player.data.PlayerTarget;
+import mp3player.player.data.Speaker;
 
 public class PlaybackEngine {
 	private PlayerStatus status;
@@ -31,7 +33,6 @@ public class PlaybackEngine {
 	private Optional<Media> currentMediaID = Optional.empty();
 	private Player player;
 	private long lastPositionUpdate;
-	private AudioDevice device;
 
 	private double gain;
 	private boolean mute;
@@ -44,8 +45,19 @@ public class PlaybackEngine {
 		info = status.getPlayback();
 
 		audio = new JavaSoundEngine();
-		device = audio.getDefaultDevice();
 		supportedTypes = new ArrayList<>(audio.getSupportedMediaTypes().stream().map(t -> t.getFileExtension()).collect(Collectors.toList()));
+
+		// Publish audio devices
+		String peerID = status.getVdp().getLocalPeer().getID();
+		List<Speaker> speakers = audio.getDevices().stream()
+				.map(dev -> new Speaker(peerID, dev.getID(), dev.getName(), dev.getMinGain(), dev.getMaxGain(), dev.isDefault()))
+				.collect(Collectors.toList());
+		status.getVdp().putData(new MachineInfo(status.getVdp().getLocalPeer(), speakers));
+
+		// Set device if not present
+		if(!target.getTargetDevice().isPresent()) {
+			target.setTargetDevice(Optional.of(speakers.get(0)));
+		}
 
 		status.getTarget().addDataChangeListener(e -> targetChanged());
 	}
@@ -53,9 +65,10 @@ public class PlaybackEngine {
 
 
 	private void targetChanged() {
-		if(containsDevice(target.getTargetDevice())) {
+		Optional<AudioDevice> localDevice = findLocalDevice(target.getTargetDevice());
+		if(localDevice.isPresent()) {
 			loadFile();
-			if(player != null) adjustPlayer();
+			if(player != null) adjustPlayer(localDevice.get());
 			publishInfo();
 		}
 		else if(!audio.getPlayers().isEmpty()){
@@ -118,7 +131,7 @@ public class PlaybackEngine {
 
 
 
-	private void adjustPlayer() {
+	private void adjustPlayer(AudioDevice localDevice) {
 		if(mute != target.isTargetMute()) {
 			mute = target.isTargetMute();
 			player.setMute(mute);
@@ -139,6 +152,13 @@ public class PlaybackEngine {
 				e1.printStackTrace();
 			}
 		}
+		if(player.getDevice() != localDevice) {
+			try {
+				player.switchDevice(localDevice);
+			} catch (IllegalStateException | AudioEngineException e) {
+				errorMessage = e.getMessage();
+			}
+		}
 
 		if(target.isTargetPlaying()) {
 			player.start();
@@ -153,13 +173,15 @@ public class PlaybackEngine {
 		double duration = player != null ? player.getDuration() : 0;
 
 		info.setStatus(target.getTargetDevice(), supportedTypes, currentMediaID,
-				gain, device.getMinGain(), device.getMaxGain(), mute,
+				gain, mute,
 				playing, false, errorMessage, position, System.currentTimeMillis(), duration);
 	}
 
 
-	public boolean containsDevice(String deviceID) {
-		return true;
+	public Optional<AudioDevice> findLocalDevice(Optional<Speaker> device) {
+		if(!device.isPresent()) return Optional.empty();
+		String id = device.get().getId();
+		return audio.getDevices().stream().filter(dev -> dev.getID().equals(id)).findAny();
 	}
 
 }

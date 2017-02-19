@@ -26,6 +26,7 @@ import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
@@ -48,6 +49,7 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import mp3player.player.PlayerStatus;
 import mp3player.player.data.Media;
+import mp3player.player.data.Speaker;
 
 public class PlayerWindow implements Initializable {
 	private Scene scene;
@@ -57,6 +59,7 @@ public class PlayerWindow implements Initializable {
 	@FXML private Menu currentSongMenu, settingsMenu;
 	@FXML private MenuBar menuBar;
 	@FXML private Slider volume;
+	@FXML private ComboBox<Speaker> speakerSelection;
 	@FXML private ListView<Media> playlist;
 	@FXML private TextField searchField;
 	@FXML private Button removeOthersButton;
@@ -188,7 +191,7 @@ public class PlayerWindow implements Initializable {
 		root.getChildren().add(node);
 
 		TranslateTransition in = new TranslateTransition(time, node);
-		in.setFromY(-40);
+		in.setFromY(-20);
 		in.setToY(0);
 		in.play();
 
@@ -203,7 +206,7 @@ public class PlayerWindow implements Initializable {
 
 		TranslateTransition in = new TranslateTransition(time, node);
 		in.setFromY(0);
-		in.setToY(-20);
+		in.setToY(-10);
 		in.play();
 
     	FadeTransition fade = new FadeTransition(time, node);
@@ -255,13 +258,20 @@ public class PlayerWindow implements Initializable {
 			currentSongMenu.textProperty().bind(properties.titleProperty());
 			currentSongMenu.disableProperty().bind(properties.mediaSelectedProperty().not());
 			volume.valueProperty().bindBidirectional(properties.gainProperty());
+			speakerSelection.setItems(properties.getSpeakers());
+			speakerSelection.getSelectionModel().selectedItemProperty().addListener((p,o,n) -> {
+				if(n != null) properties.setSpeaker(Optional.of(n));
+			});
+			properties.speakerProperty().addListener((p,o,n) -> {
+				speakerSelection.getSelectionModel().select(n.orElse(null));
+			});
 		}
 		else if(searchField == null) {
 			// Initialize playlist view
 			playlist.setItems(properties.getPlaylist());
 			removeOthersButton.disableProperty().bind(properties.playlistAvailableProperty().not());
 			playlist.getSelectionModel().selectedItemProperty().addListener((p,o,n) -> {
-				if(n != null) properties.setCurrentMedia(Optional.ofNullable(n));
+				if(n != null) properties.setCurrentMedia(Optional.of(n));
 			});
 			properties.currentMediaProperty().addListener((p,o,n) -> {
 				playlist.getSelectionModel().select(properties.getCurrentMedia().orElse(null));

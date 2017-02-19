@@ -3,9 +3,11 @@ package mp3player.player;
 import java.io.IOException;
 import java.util.Optional;
 
+import com.mp3player.vdp.Peer;
 import com.mp3player.vdp.RemoteFile;
 import com.mp3player.vdp.VDP;
 
+import mp3player.player.data.MachineInfo;
 import mp3player.player.data.Media;
 import mp3player.player.data.PlaybackStatus;
 import mp3player.player.data.PlayerTarget;
@@ -40,6 +42,10 @@ public class PlayerStatus {
 
 	public PlayerTarget getTarget() {
 		return target;
+	}
+
+	public Optional<MachineInfo> getInfo(Peer peer) {
+		return vdp.getData(MachineInfo.id(peer)).map(data -> (MachineInfo)data);
 	}
 
 

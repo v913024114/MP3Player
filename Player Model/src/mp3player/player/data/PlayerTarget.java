@@ -19,7 +19,7 @@ public class PlayerTarget extends Distributed {
 
 	public static final String VDP_ID = "player-target";
 
-	private String targetDevice;
+	private Optional<Speaker> targetDevice = Optional.empty();
 
 	/**
 	 * if empty, dispose of player
@@ -47,11 +47,11 @@ public class PlayerTarget extends Distributed {
 		return null;
 	}
 
-	public String getTargetDevice() {
+	public Optional<Speaker> getTargetDevice() {
 		return targetDevice;
 	}
 
-	public void setTargetDevice(String targetDevice) {
+	public void setTargetDevice(Optional<Speaker> targetDevice) {
 		this.targetDevice = targetDevice;
 		fireChangedLocally();
 	}

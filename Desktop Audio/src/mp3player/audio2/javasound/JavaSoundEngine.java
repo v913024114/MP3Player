@@ -32,7 +32,7 @@ import mp3player.desktopaudio.Player;
 
 public class JavaSoundEngine extends AudioEngine
 {
-	private JavaSoundMixer[] devices;
+	private List<JavaSoundMixer> devices;
 	private JavaSoundMixer defaultDevice;
 
 	private List<MediaType> supportedTypes;
@@ -135,7 +135,7 @@ public class JavaSoundEngine extends AudioEngine
 
 
 
-	public JavaSoundMixer[] getOutputDevices(Class<?> sourceLineClass) {
+	public List<JavaSoundMixer> getOutputDevices(Class<?> sourceLineClass) {
 		List<JavaSoundMixer> supportedList = new ArrayList<JavaSoundMixer>();
 
 		Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
@@ -168,13 +168,13 @@ public class JavaSoundEngine extends AudioEngine
 			supportedList.get(0).setDefault(true);
 		}
 
-		return supportedList.toArray(new JavaSoundMixer[supportedList.size()]);
+		return supportedList;
 	}
 
 
 	@Override
-	public AudioDevice[] getDevices() {
-		return devices;
+	public List<AudioDevice> getDevices() {
+		return Collections.unmodifiableList(devices);
 	}
 
 	@Override

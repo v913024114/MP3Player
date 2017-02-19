@@ -72,8 +72,8 @@ public class JavaFXAudioEngine extends AudioEngine
 	}
 
 	@Override
-	public AudioDevice[] getDevices() {
-		return new AudioDevice[]{ DEVICE };
+	public List<AudioDevice> getDevices() {
+		return Arrays.asList(DEVICE);
 	}
 
 

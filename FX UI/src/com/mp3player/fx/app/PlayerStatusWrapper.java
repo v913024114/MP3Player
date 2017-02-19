@@ -11,6 +11,8 @@ import java.util.function.DoubleConsumer;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
+import com.mp3player.vdp.DataEvent;
+import com.mp3player.vdp.DataListener;
 import com.mp3player.vdp.Distributed;
 
 import javafx.application.Platform;
@@ -26,7 +28,9 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import mp3player.player.PlayerStatus;
+import mp3player.player.data.MachineInfo;
 import mp3player.player.data.Media;
+import mp3player.player.data.Speaker;
 
 public class PlayerStatusWrapper {
 	private PlayerStatus status;
@@ -88,6 +92,14 @@ public class PlayerStatusWrapper {
 	public Optional<Media> getCurrentMedia() { return currentMedia.get(); }
 	public void setCurrentMedia(Optional<Media> value) { currentMedia.set(value); }
 	public ObjectProperty<Optional<Media>> currentMediaProperty() { return currentMedia; }
+
+	private ObservableList<Speaker> speakers;
+	public ObservableList<Speaker> getSpeakers() { return speakers; }
+
+	private ObjectProperty<Optional<Speaker>> speaker;
+	public Optional<Speaker> getSpeaker() { return speaker.get(); }
+	public void setSpeaker(Optional<Speaker> value) { speaker.set(value); }
+	public ObjectProperty<Optional<Speaker>> speakerProperty() { return speaker; }
 
 
 
@@ -173,6 +185,32 @@ public class PlayerStatusWrapper {
 				status.getPlayback(),
 				() -> status.getPlayback().getCurrentMedia(),
 				newValue -> status.getTarget().setTargetMedia(newValue, true));
+
+		speakers = FXCollections.observableArrayList();
+		status.getVdp().addDataListener(new DataListener() {
+			@Override
+			public void onDataRemoved(DataEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+			@Override
+			public void onDataChanged(DataEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+			@Override
+			public void onDataAdded(DataEvent e) {
+				if(e.getData().getID().startsWith("machineinfo-")) {
+					MachineInfo info = (MachineInfo)e.getData();
+					speakers.addAll(info.getSpeakers());
+				}
+			}
+		});
+
+		speaker = new DistributedObjectProperty<>("speaker", this,
+				status.getPlayback(),
+				() -> status.getPlayback().getDevice(),
+				newValue -> status.getTarget().setTargetDevice(newValue));
 	}
 
 

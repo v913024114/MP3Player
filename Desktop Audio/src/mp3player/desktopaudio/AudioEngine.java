@@ -90,7 +90,7 @@ public abstract class AudioEngine {
 
 	public abstract AudioDevice getDefaultDevice();
 
-	public abstract AudioDevice[] getDevices();
+	public abstract List<AudioDevice> getDevices();
 
 	public Logger getLogger() {
 		return logger;

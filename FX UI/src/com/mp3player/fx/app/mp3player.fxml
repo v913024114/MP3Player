@@ -16,7 +16,7 @@
    <bottom>
       <HBox alignment="CENTER" BorderPane.alignment="CENTER">
          <children>
-            <ComboBox prefHeight="25.0" prefWidth="110.0" promptText="Audio device" />
+            <ComboBox fx:id="speakerSelection" prefHeight="25.0" prefWidth="110.0" promptText="Audio device" />
             <Separator orientation="VERTICAL">
                <padding>
                   <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
