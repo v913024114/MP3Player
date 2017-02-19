@@ -179,7 +179,7 @@ public class PlayerWindow implements Initializable {
 		return result;
 	}
 
-	private void play(List<File> localFiles, File startFile) {
+	public void play(List<File> localFiles, File startFile) {
 		int startIndex = localFiles.indexOf(startFile);
 		List<RemoteFile> remoteFiles = localFiles.stream().map(file -> status.getVdp().mountFile(file)).collect(Collectors.toList());
 		Media mediaID = status.getPlaylist().setAll(remoteFiles, startIndex, status.getTarget().isShuffled(), true);

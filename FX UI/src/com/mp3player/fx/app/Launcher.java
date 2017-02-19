@@ -1,7 +1,9 @@
-package com.mp3player.fx.test;
+package com.mp3player.fx.app;
 
-import com.mp3player.fx.app.PlayerStatusWrapper;
-import com.mp3player.fx.app.PlayerWindow;
+import java.io.File;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.mp3player.playback.PlaybackEngine;
 import com.mp3player.vdp.VDP;
 
@@ -13,11 +15,13 @@ import mp3player.mediacommand.MediaCommand;
 import mp3player.mediacommand.MediaCommandManager;
 import mp3player.player.PlayerStatus;
 
-public class TestFX2D extends Application {
+public class Launcher extends Application {
 
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
+		System.out.println("Parameters: "+getParameters().getUnnamed());
+
 		VDP vdp = new VDP();
 
 		PlayerStatus status = new PlayerStatus(vdp);
@@ -25,18 +29,13 @@ public class TestFX2D extends Application {
 		window.show();
 
 		addControl(window.getStatusWrapper());
-//		new PlayerWindow(new Stage());
-
-//		new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(slider.valueProperty(), 0)),
-//				new KeyFrame(new Duration(10000), new KeyValue(slider.valueProperty(), 99))).play();
 
 		new PlaybackEngine(status);
 
-//		RemoteFile file = vdp.mountFile(new File("C:/stereo.mp3"));
-//		String mediaID = status.getPlaylist().add(file);
-//
-//		status.getTarget().setTargetMedia(mediaID);
-//		status.getTarget().setTargetPlaying(true);
+		List<File> files = getParameters().getUnnamed().stream().map(path -> new File(path)).filter(file -> file.exists()).collect(Collectors.toList());
+		if(!files.isEmpty()) {
+			window.play(files, files.get(0));
+		}
 	}
 
 	public static void main(String[] args) {
