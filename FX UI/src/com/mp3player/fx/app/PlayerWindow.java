@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import com.aquafx_project.AquaFx;
 import com.mp3player.fx.FileDropOverlay;
 import com.mp3player.fx.PlayerControl;
+import com.mp3player.fx.icons.FXIcons;
 import com.mp3player.vdp.RemoteFile;
 
 import javafx.animation.FadeTransition;
@@ -34,8 +35,6 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -44,7 +43,6 @@ import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import mp3player.player.PlayerStatus;
@@ -88,7 +86,7 @@ public class PlayerWindow implements Initializable {
 		scene.getStylesheets().add(getClass().getResource("defaultstyle.css").toExternalForm());
 
 		stage.setTitle("MX Player");
-		stage.getIcons().add(new Image(getClass().getResource("window-icon.png").toExternalForm()));
+		stage.getIcons().add(FXIcons.get("Play_MouseOn.png", 32).getImage());
 
 		stage.setOnHidden(e -> {
 			quit();
@@ -146,14 +144,14 @@ public class PlayerWindow implements Initializable {
 
 		// Play / New Playlist
 		if(!audioFiles.isEmpty()) {
-			ToggleButton play = new ToggleButton("Play", loadIcon("../icons/Play_MouseOn.png", 32));
+			ToggleButton play = new ToggleButton("Play", FXIcons.get("/Play_MouseOn.png", 32));
 			play.setOnAction(e -> play(audioFiles, files.get(0)));
 			result.add(play);
 		}
 
 		// Add to Playlist
 		if(!cold && !audioFiles.isEmpty()) {
-			ToggleButton append = new ToggleButton("Add to playlist", loadIcon("../icons/Append_MouseOn.png", 32));
+			ToggleButton append = new ToggleButton("Add to playlist", FXIcons.get("Append_MouseOn.png", 32));
 			append.setOnAction(e -> {
 				List<RemoteFile> remoteFiles = audioFiles.stream().map(file -> status.getVdp().mountFile(file)).collect(Collectors.toList());
 				Media mediaID = status.getPlaylist().addAll(remoteFiles, 0, status.getTarget().isShuffled(), status.getPlayback().getCurrentMedia());
@@ -169,7 +167,7 @@ public class PlayerWindow implements Initializable {
 			File file = files.get(0);
 			List<File> allAudioFiles = AudioFiles.allAudioFilesIn(files.get(0).getParentFile());
 			if(allAudioFiles.size() > 1) {
-				ToggleButton playFolder = new ToggleButton("Play folder", loadIcon("../icons/Shuffle_MouseOn.png", 32));
+				ToggleButton playFolder = new ToggleButton("Play folder", FXIcons.get("Shuffle_MouseOn.png", 32));
 				playFolder.setOnAction(e -> play(allAudioFiles, AudioFiles.isAudioFile(file) ? file : allAudioFiles.get(0)));
 				result.add(playFolder);
 			}
@@ -253,8 +251,8 @@ public class PlayerWindow implements Initializable {
 		if(playlist == null) {
 			// Initialize UI
 			settingsMenu.setText(null);
-			settingsMenu.setGraphic(loadIcon("settings.png", 20));
-			currentSongMenu.setGraphic(loadIcon("file.png", 20));
+			settingsMenu.setGraphic(FXIcons.get("settings.png", 20));
+			currentSongMenu.setGraphic(FXIcons.get("file.png", 20));
 			currentSongMenu.textProperty().bind(properties.titleProperty());
 			currentSongMenu.disableProperty().bind(properties.mediaSelectedProperty().not());
 			volume.valueProperty().bindBidirectional(properties.gainProperty());
@@ -285,17 +283,6 @@ public class PlayerWindow implements Initializable {
 		else {
 			// Initialize search view
 		}
-	}
-
-
-	private static ImageView loadIcon(String filename, double height) {
-		ImageView settingsImage = new ImageView(new Image(PlayerWindow.class.getResource(filename).toExternalForm()));
-		settingsImage.setFitHeight(height * dpiFactor());
-		settingsImage.setPreserveRatio(true);
-		return settingsImage;
-	}
-    private static double dpiFactor() {
-	    return Font.getDefault().getSize() / 12.0;
 	}
 
     public void show() {

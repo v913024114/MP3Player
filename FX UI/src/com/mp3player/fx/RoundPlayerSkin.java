@@ -1,5 +1,5 @@
 package com.mp3player.fx;
-import java.io.InputStream;
+import com.mp3player.fx.icons.FXIcons;
 
 import javafx.geometry.Bounds;
 import javafx.geometry.HPos;
@@ -12,13 +12,11 @@ import javafx.scene.control.ButtonBase;
 import javafx.scene.control.SkinBase;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.Tooltip;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
-import javafx.scene.text.Font;
 import javafx.util.converter.DoubleStringConverter;
 
 // TODO implement indeterminate (ProgressBar)
@@ -75,8 +73,8 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 		buttonRoot = new Group(buttonPane);
 		getChildren().add(buttonRoot);
 
-		playIcon = loadIcon("icons/Play_MouseOff.png", 32, 32);
-		pauseIcon = loadIcon("icons/Pause_MouseOff.png", 32, 32);
+		playIcon = FXIcons.get("Play_MouseOff.png", 32);
+		pauseIcon = FXIcons.get("Pause_MouseOff.png", 32);
 		buttonPane.setCenter(playButton = new ToggleButton(null, playIcon));
 		playButton.selectedProperty().bindBidirectional(getSkinnable().playingProperty());
 		getSkinnable().playingProperty().addListener((p,o,n) -> {
@@ -90,10 +88,10 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 		BorderPane.setAlignment(bottomRoot, Pos.TOP_CENTER);
 
 		Insets buttonMargins = new Insets(innerMargin);
-		bottomButtonPane.setCenter(stopButton = new Button(null, loadIcon("icons/Stop_MouseOff.png", 18, 18)));
-		bottomButtonPane.setLeft(prevButton = new Button(null, loadIcon("icons/Previous_MouseOff.png", 24, 24)));
+		bottomButtonPane.setCenter(stopButton = new Button(null, FXIcons.get("Stop_MouseOff.png", 18)));
+		bottomButtonPane.setLeft(prevButton = new Button(null, FXIcons.get("Previous_MouseOff.png", 24)));
 		BorderPane.setAlignment(prevButton, Pos.TOP_RIGHT);
-		bottomButtonPane.setRight(nextButton = new Button(null, loadIcon("icons/Next_MouseOff.png", 24, 24)));
+		bottomButtonPane.setRight(nextButton = new Button(null, FXIcons.get("Next_MouseOff.png", 24)));
 		BorderPane.setMargin(playButton, buttonMargins);
 		BorderPane.setMargin(stopButton, buttonMargins);
 		BorderPane.setMargin(prevButton, buttonMargins);
@@ -124,17 +122,17 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 		});
 
 		// Loop
-		getChildren().add(loopButton = new ToggleButton(null, loadIcon("icons/Repeat_MouseOff.png", 24, 24)));
+		getChildren().add(loopButton = new ToggleButton(null, FXIcons.get("Repeat_MouseOff.png", 24)));
 		loopButton.selectedProperty().bindBidirectional(getSkinnable().loopProperty());
 		loopButton.setTooltip(new Tooltip("Loop playlist"));
 
 		// Shuffle
-		getChildren().add(shuffleButton = new ToggleButton(null, loadIcon("icons/Shuffle_MouseOff.png", 24, 24)));
+		getChildren().add(shuffleButton = new ToggleButton(null, FXIcons.get("Shuffle_MouseOff.png", 24)));
 		shuffleButton.selectedProperty().bindBidirectional(getSkinnable().shuffledProperty());
 		shuffleButton.setTooltip(new Tooltip("Shuffled playlist"));
 
 		// Playlist
-		getChildren().add(listButton = new Button(null, loadIcon("icons/Append_MouseOff.png", 24, 24)));
+		getChildren().add(listButton = new Button(null, FXIcons.get("Append_MouseOff.png", 24)));
 		listButton.setOnAction(e -> {
 			if(getSkinnable().getOnShowPlaylist() != null)
 				getSkinnable().getOnShowPlaylist().handle(e);
@@ -142,7 +140,7 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 		listButton.setTooltip(new Tooltip("Show playlist"));
 
 		// Search
-		getChildren().add(searchButton = new Button(null, loadIcon("icons/Play_MouseOff.png", 24, 24)));
+		getChildren().add(searchButton = new Button(null, FXIcons.get("Play_MouseOff.png", 24)));
 		searchButton.setOnAction(e -> {
 			if(getSkinnable().getOnSearch() != null)
 				getSkinnable().getOnSearch().handle(e);
@@ -196,24 +194,5 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
     	layoutInArea(listButton, contentX+inset, contentY+inset, contentWidth-2*inset, contentHeight-2*inset, 0, HPos.LEFT, VPos.TOP);
     	layoutInArea(searchButton, contentX+inset, contentY+inset, contentWidth-2*inset, contentHeight-2*inset, 0, HPos.RIGHT, VPos.TOP);
     }
-
-
-    private static ImageView loadIcon(String filename, double width, double height) {
-		return loadImage(RoundPlayerSkin.class.getResourceAsStream(filename), width, height);
-	}
-
-    private static ImageView loadImage(InputStream in, double width, double height) {
-		if(in == null) return null;
-		try {
-			ImageView iv = new ImageView(new Image(in, width*dpiFactor(), height*dpiFactor(), true, true));
-			return iv;
-		}catch(Exception exc) {
-			return null;
-		}
-	}
-
-    private static double dpiFactor() {
-	    return Font.getDefault().getSize() / 12.0;
-	}
 
 }
