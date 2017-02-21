@@ -480,8 +480,8 @@ public class CircularSliderSkin extends SkinBase<CircularSlider> {
 
         recalculateShapes(contentWidth, contentHeight);
         layoutInArea(foregroundMask, contentX, contentY, contentWidth, contentHeight, 0, HPos.CENTER, VPos.CENTER);
-        centralGroup.setTranslateX(contentWidth/2);
-        centralGroup.setTranslateY(contentHeight/2);
+        centralGroup.setTranslateX(contentX+contentWidth/2);
+        centralGroup.setTranslateY(contentY+contentHeight/2);
         centralScale.setX(barRadius);
         centralScale.setY(barRadius);
     }
