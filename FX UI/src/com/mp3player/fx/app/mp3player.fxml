@@ -16,13 +16,13 @@
    <bottom>
       <HBox alignment="CENTER" BorderPane.alignment="CENTER">
          <children>
-            <ComboBox fx:id="speakerSelection" prefHeight="25.0" prefWidth="110.0" promptText="Audio device" />
+            <ComboBox fx:id="speakerSelection" maxWidth="1.7976931348623157E308" minWidth="30.0" promptText="Audio device" HBox.hgrow="ALWAYS" />
             <Separator orientation="VERTICAL">
                <padding>
                   <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
                </padding>
             </Separator>
-            <Slider fx:id="volume" max="6.0" maxWidth="1.7976931348623157E308" min="-40.0" prefHeight="38.0" prefWidth="156.0" showTickLabels="true" showTickMarks="true" />
+            <Slider fx:id="volume" max="6.0" maxWidth="1.7976931348623157E308" min="-40.0" minWidth="150.0" showTickMarks="true" HBox.hgrow="ALWAYS" />
          </children>
          <padding>
             <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
@@ -64,7 +64,7 @@
                            <accelerator>
                               <KeyCodeCombination alt="UP" code="E" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
                            </accelerator></MenuItem>
-                        <MenuItem mnemonicParsing="false" text="Info" />
+                        <MenuItem mnemonicParsing="false" onAction="#displayInfo" text="Info" />
                         <SeparatorMenuItem mnemonicParsing="false" />
                         <MenuItem mnemonicParsing="false" onAction="#quit" text="Quit">
                            <accelerator>

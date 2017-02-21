@@ -73,8 +73,8 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 		buttonRoot = new Group(buttonPane);
 		getChildren().add(buttonRoot);
 
-		playIcon = FXIcons.get("Play_MouseOff.png", 32);
-		pauseIcon = FXIcons.get("Pause_MouseOff.png", 32);
+		playIcon = FXIcons.get("Play.png", 32);
+		pauseIcon = FXIcons.get("Pause.png", 32);
 		buttonPane.setCenter(playButton = new ToggleButton(null, playIcon));
 		playButton.selectedProperty().bindBidirectional(getSkinnable().playingProperty());
 		getSkinnable().playingProperty().addListener((p,o,n) -> {
@@ -88,10 +88,10 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 		BorderPane.setAlignment(bottomRoot, Pos.TOP_CENTER);
 
 		Insets buttonMargins = new Insets(innerMargin);
-		bottomButtonPane.setCenter(stopButton = new Button(null, FXIcons.get("Stop_MouseOff.png", 18)));
-		bottomButtonPane.setLeft(prevButton = new Button(null, FXIcons.get("Previous_MouseOff.png", 24)));
+		bottomButtonPane.setCenter(stopButton = new Button(null, FXIcons.get("Stop.png", 20)));
+		bottomButtonPane.setLeft(prevButton = new Button(null, FXIcons.get("Previous.png", 32)));
 		BorderPane.setAlignment(prevButton, Pos.TOP_RIGHT);
-		bottomButtonPane.setRight(nextButton = new Button(null, FXIcons.get("Next_MouseOff.png", 24)));
+		bottomButtonPane.setRight(nextButton = new Button(null, FXIcons.get("Next.png", 32)));
 		BorderPane.setMargin(playButton, buttonMargins);
 		BorderPane.setMargin(stopButton, buttonMargins);
 		BorderPane.setMargin(prevButton, buttonMargins);
@@ -122,17 +122,19 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 		});
 
 		// Loop
-		getChildren().add(loopButton = new ToggleButton(null, FXIcons.get("Repeat_MouseOff.png", 24)));
+		getChildren().add(loopButton = new ToggleButton(null, FXIcons.get("Loop.png", 24)));
 		loopButton.selectedProperty().bindBidirectional(getSkinnable().loopProperty());
 		loopButton.setTooltip(new Tooltip("Loop playlist"));
 
 		// Shuffle
-		getChildren().add(shuffleButton = new ToggleButton(null, FXIcons.get("Shuffle_MouseOff.png", 24)));
+		getChildren().add(shuffleButton = new ToggleButton(null, FXIcons.get("Shuffle.png", 24)));
 		shuffleButton.selectedProperty().bindBidirectional(getSkinnable().shuffledProperty());
-		shuffleButton.setTooltip(new Tooltip("Shuffled playlist"));
+		shuffleButton.setTooltip(new Tooltip("Shuffled playlist\n"
+				+ "When active: modifying playlist will trigger playlist to be shuffled\n"
+				+ "On activation: shuffle playlist"));
 
 		// Playlist
-		getChildren().add(listButton = new Button(null, FXIcons.get("Append_MouseOff.png", 24)));
+		getChildren().add(listButton = new Button(null, FXIcons.get("Playlist.png", 24)));
 		listButton.setOnAction(e -> {
 			if(getSkinnable().getOnShowPlaylist() != null)
 				getSkinnable().getOnShowPlaylist().handle(e);
@@ -140,12 +142,12 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 		listButton.setTooltip(new Tooltip("Show playlist"));
 
 		// Search
-		getChildren().add(searchButton = new Button(null, FXIcons.get("Play_MouseOff.png", 24)));
+		getChildren().add(searchButton = new Button(null, FXIcons.get("Search.png", 24)));
 		searchButton.setOnAction(e -> {
 			if(getSkinnable().getOnSearch() != null)
 				getSkinnable().getOnSearch().handle(e);
 		});
-		searchButton.setTooltip(new Tooltip("Search"));
+		searchButton.setTooltip(new Tooltip("Search for file or folder"));
 	}
 
 	private void layoutButtons(double rad) {

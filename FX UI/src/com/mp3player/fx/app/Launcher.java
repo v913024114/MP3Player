@@ -4,16 +4,17 @@ import java.io.File;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.mp3player.fx.playerwrapper.PlayerStatusWrapper;
+import com.mp3player.machine.LocalMachine;
+import com.mp3player.mediacommand.CombinationManager;
+import com.mp3player.mediacommand.MediaCommand;
+import com.mp3player.mediacommand.MediaCommandManager;
+import com.mp3player.model.PlayerStatus;
 import com.mp3player.playback.PlaybackEngine;
 import com.mp3player.vdp.VDP;
 
 import javafx.application.Application;
 import javafx.stage.Stage;
-import mp3player.machine.LocalMachine;
-import mp3player.mediacommand.CombinationManager;
-import mp3player.mediacommand.MediaCommand;
-import mp3player.mediacommand.MediaCommandManager;
-import mp3player.player.PlayerStatus;
 
 public class Launcher extends Application {
 

@@ -13,6 +13,10 @@ import com.aquafx_project.AquaFx;
 import com.mp3player.fx.FileDropOverlay;
 import com.mp3player.fx.PlayerControl;
 import com.mp3player.fx.icons.FXIcons;
+import com.mp3player.fx.playerwrapper.PlayerStatusWrapper;
+import com.mp3player.model.PlayerStatus;
+import com.mp3player.player.data.Media;
+import com.mp3player.player.data.Speaker;
 import com.mp3player.vdp.RemoteFile;
 
 import javafx.animation.FadeTransition;
@@ -26,6 +30,8 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListView;
@@ -43,11 +49,9 @@ import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import mp3player.player.PlayerStatus;
-import mp3player.player.data.Media;
-import mp3player.player.data.Speaker;
 
 public class PlayerWindow implements Initializable {
 	private Scene scene;
@@ -86,7 +90,7 @@ public class PlayerWindow implements Initializable {
 		scene.getStylesheets().add(getClass().getResource("defaultstyle.css").toExternalForm());
 
 		stage.setTitle("MX Player");
-		stage.getIcons().add(FXIcons.get("Play_MouseOn.png", 32).getImage());
+		stage.getIcons().add(FXIcons.get("Play2.png", 32).getImage());
 
 		stage.setOnHidden(e -> {
 			quit();
@@ -144,14 +148,14 @@ public class PlayerWindow implements Initializable {
 
 		// Play / New Playlist
 		if(!audioFiles.isEmpty()) {
-			ToggleButton play = new ToggleButton("Play", FXIcons.get("/Play_MouseOn.png", 32));
+			ToggleButton play = new ToggleButton("Play", FXIcons.get("Play2.png", 32));
 			play.setOnAction(e -> play(audioFiles, files.get(0)));
 			result.add(play);
 		}
 
 		// Add to Playlist
 		if(!cold && !audioFiles.isEmpty()) {
-			ToggleButton append = new ToggleButton("Add to playlist", FXIcons.get("Append_MouseOn.png", 32));
+			ToggleButton append = new ToggleButton("Add to playlist", FXIcons.get("Append.png", 32));
 			append.setOnAction(e -> {
 				List<RemoteFile> remoteFiles = audioFiles.stream().map(file -> status.getVdp().mountFile(file)).collect(Collectors.toList());
 				Media mediaID = status.getPlaylist().addAll(remoteFiles, 0, status.getTarget().isShuffled(), status.getPlayback().getCurrentMedia());
@@ -167,7 +171,7 @@ public class PlayerWindow implements Initializable {
 			File file = files.get(0);
 			List<File> allAudioFiles = AudioFiles.allAudioFilesIn(files.get(0).getParentFile());
 			if(allAudioFiles.size() > 1) {
-				ToggleButton playFolder = new ToggleButton("Play folder", FXIcons.get("Shuffle_MouseOn.png", 32));
+				ToggleButton playFolder = new ToggleButton("Play folder", FXIcons.get("PlayFolder.png", 32));
 				playFolder.setOnAction(e -> play(allAudioFiles, AudioFiles.isAudioFile(file) ? file : allAudioFiles.get(0)));
 				result.add(playFolder);
 			}
@@ -251,8 +255,8 @@ public class PlayerWindow implements Initializable {
 		if(playlist == null) {
 			// Initialize UI
 			settingsMenu.setText(null);
-			settingsMenu.setGraphic(FXIcons.get("settings.png", 20));
-			currentSongMenu.setGraphic(FXIcons.get("file.png", 20));
+			settingsMenu.setGraphic(FXIcons.get("Settings.png", 24));
+			currentSongMenu.setGraphic(FXIcons.get("Media.png", 24));
 			currentSongMenu.textProperty().bind(properties.titleProperty());
 			currentSongMenu.disableProperty().bind(properties.mediaSelectedProperty().not());
 			volume.valueProperty().bindBidirectional(properties.gainProperty());
@@ -287,6 +291,11 @@ public class PlayerWindow implements Initializable {
 
     public void show() {
 		stage.show();
+		System.out.println(stage.getWidth()+" x "+stage.getHeight());
+
+		// default values, apply for bundled application
+//    	stage.setWidth(314);
+//    	stage.setHeight(398);
     }
 
     @FXML
@@ -306,5 +315,16 @@ public class PlayerWindow implements Initializable {
     	List<Media> newList = new ArrayList<>();
     	properties.getStatus().getPlayback().getCurrentMedia().ifPresent(m -> newList.add(m));
     	properties.getStatus().getPlaylist().setAll(newList);
+    }
+
+    @FXML
+    public void displayInfo() {
+    	Alert info = new Alert(AlertType.INFORMATION);
+    	info.setTitle("Info");
+    	info.setHeaderText("MX Player");
+    	info.setContentText("MX Player pre 0.1\nAuthor: Philipp Holl\nFeb 20, 2017");
+    	info.initOwner(stage);
+    	info.initModality(Modality.NONE);
+    	info.show();
     }
 }
