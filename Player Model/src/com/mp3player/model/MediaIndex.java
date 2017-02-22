@@ -1,11 +1,14 @@
 package com.mp3player.model;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 import com.mp3player.player.data.Media;
 import com.mp3player.player.data.PlaybackStatus;
@@ -18,6 +21,7 @@ public class MediaIndex {
 	private List<RemoteFile> allRoots;
 	private List<RemoteFile> localRoots;
 	private MediaSet recentlyUsed;
+	private MediaSet localIndex; // no directories directly contained
 
 	private List<MediaIndexListener> listeners = new CopyOnWriteArrayList<>();
 
@@ -27,26 +31,69 @@ public class MediaIndex {
 		this.vdp = vdp;
 		allRoots = new ArrayList<>();
 		localRoots = new ArrayList<>();
+		localRoots.add(vdp.mountFile(new File(System.getProperty("user.home"), "Music")));
 		recentlyUsed = new MediaSet();
 		recentlyUsed.setWorking(false);
+		localIndex = new MediaSet();
 
 		Optional<Distributed> playback = vdp.getData(PlaybackStatus.VDP_ID);
 		if(!playback.isPresent()) throw new IllegalStateException("playback must be present in VDP");
 		playback.get().addDataChangeListener(e -> ((PlaybackStatus)e.getData()).getCurrentMedia().ifPresent(m -> addToRecentlyUsed(m)));
+
+		new Thread(() -> buildLocal()).start();
 	}
 
 
 	public Media get(RemoteFile file) {
-		return null; // TODO
+		// TODO
+		Media media = new Media(vdp.getLocalPeer().getID(), file.getPath());
+		return media;
 	}
 
 	public MediaSet startSearch(MediaFilter filter) {
-		return null; // TODO
+		MediaSet set = new MediaSet();
+		new Thread(() -> {
+			List<Media> searchList = localIndex.getItems().stream().filter(filter).collect(Collectors.toList());
+			set.add(searchList);
+			set.setWorking(false);
+		}).start();
+		return set;
 	}
 
 	private void addToRecentlyUsed(Media media) {
 		recentlyUsed.remove(Arrays.asList(media));
 		recentlyUsed.add(0, Arrays.asList(media));
+	}
+
+	private void buildLocal() {
+		localIndex.setWorking(true);
+		for(RemoteFile root : localRoots) {
+			addToIndex(root);
+		}
+		localIndex.setWorking(false);
+	}
+
+	private void addToIndex(RemoteFile dir) {
+		List<RemoteFile> files;
+		try {
+			files = dir.list().collect(Collectors.toList());
+		} catch (UnsupportedOperationException | IOException e) {
+			return;
+		}
+		List<Media> mediaList = new ArrayList<>();
+		List<RemoteFile> subdirs = new ArrayList<>();
+
+		for(RemoteFile file : files) {
+			if(file.isDirectory()) subdirs.add(file);
+			else if(AudioFiles.isAudioFile(file.getName())){
+				mediaList.add(get(file));
+			}
+		}
+
+		localIndex.add(mediaList);
+		for(RemoteFile subdir : subdirs) {
+			addToIndex(subdir);
+		}
 	}
 
 

@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -15,6 +16,7 @@ import com.mp3player.fx.PlayerControl;
 import com.mp3player.fx.icons.FXIcons;
 import com.mp3player.fx.playerwrapper.MediaIndexWrapper;
 import com.mp3player.fx.playerwrapper.PlayerStatusWrapper;
+import com.mp3player.model.AudioFiles;
 import com.mp3player.model.MediaIndex;
 import com.mp3player.model.PlayerStatus;
 import com.mp3player.player.data.Media;
@@ -25,6 +27,7 @@ import javafx.animation.FadeTransition;
 import javafx.animation.TranslateTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -36,6 +39,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
@@ -43,6 +47,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -60,14 +65,21 @@ public class PlayerWindow implements Initializable {
 	private Stage stage;
 	private StackPane root;
 
+	// Default
 	@FXML private Menu currentSongMenu, settingsMenu;
 	@FXML private MenuBar menuBar;
 	@FXML private Slider volume;
 	@FXML private ComboBox<Speaker> speakerSelection;
-	@FXML private ListView<Media> playlist, searchResult;
-	@FXML private TextField searchField;
+
+	// Playlist
+	private Pane playlistRoot;
 	@FXML private Button removeOthersButton;
-	private Pane playlistRoot, searchRoot;
+	@FXML private ListView<Media> playlist;
+
+	// Search
+	private Pane searchRoot;
+	@FXML private ListView<Media> searchResult;
+	@FXML private TextField searchField;
 
 	private PlayerControl control;
 
@@ -163,7 +175,7 @@ public class PlayerWindow implements Initializable {
 			append.setOnAction(e -> {
 				List<RemoteFile> remoteFiles = audioFiles.stream().map(file -> status.getVdp().mountFile(file)).collect(Collectors.toList());
 				Media mediaID = status.getPlaylist().addAll(remoteFiles, 0, status.getTarget().isShuffled(), status.getPlayback().getCurrentMedia());
-				if(status.getPlayback().getCurrentMedia() == null) {
+				if(!status.getPlayback().getCurrentMedia().isPresent()) {
 					status.getTarget().setTargetMedia(mediaID, true);
 				}
 			});
@@ -287,10 +299,87 @@ public class PlayerWindow implements Initializable {
 					Platform.runLater(() -> closePlaylist());
 				}
 			});
+			playlist.setCellFactory(list -> new MediaCell());
 		}
 		else {
 			// Initialize search view
+			searchField.textProperty().addListener((p,o,n) -> {
+				if(n.isEmpty()) {
+					searchResult.setItems(index.getRecentlyUsed().getItems());
+				} else {
+					String lowerCase = n.toLowerCase();
+					searchResult.setItems(index.startSearch(media -> media.getPath().toLowerCase().contains(lowerCase)).getItems());
+				}
+				if(!searchResult.getItems().isEmpty()) searchResult.getSelectionModel().select(0);
+				searchResult.getItems().addListener((ListChangeListener<Media>) change -> {
+					if(!searchResult.getItems().isEmpty()) searchResult.getSelectionModel().select(0);
+				});
+			});
 			searchResult.setItems(index.getRecentlyUsed().getItems());
+			searchResult.setCellFactory(list -> new MediaCell());
+			searchResult.setOnKeyPressed(e -> {
+				if(e.getCode() == KeyCode.ENTER) {
+					Media m = searchResult.getSelectionModel().getSelectedItem();
+					if(m != null) {
+						playFromLibrary(m, e.isControlDown());
+					}
+					Platform.runLater(() -> closeSearch());
+				}
+			});
+			searchField.setOnKeyPressed(e -> {
+				if(e.getCode() == KeyCode.ENTER) {
+					Media m = searchResult.getSelectionModel().getSelectedItem();
+					if(m != null) {
+						playFromLibrary(m, e.isControlDown());
+					}
+					e.consume();
+					Platform.runLater(() -> closeSearch());
+				} else if(e.getCode() == KeyCode.DOWN) {
+					int next = searchResult.getSelectionModel().getSelectedIndex()+1;
+					if(searchResult.getItems().size() > next) searchResult.getSelectionModel().select(next);
+					e.consume();
+				} else if(e.getCode() == KeyCode.UP){
+					int prev = searchResult.getSelectionModel().getSelectedIndex() - 1;
+					if(prev >= 0) searchResult.getSelectionModel().select(prev);
+					e.consume();
+				}
+			});
+			searchResult.setOnMouseReleased(e -> {
+				if(e.getButton() == MouseButton.PRIMARY) {
+					Media m = searchResult.getSelectionModel().getSelectedItem();
+					if(m != null && (!properties.getCurrentMedia().isPresent() || !m.equals(properties.getCurrentMedia()))) {
+						playFromLibrary(m, e.isControlDown());
+					}
+					Platform.runLater(() -> closeSearch());
+				}
+			});
+		}
+	}
+
+	private void playFromLibrary(Media media, boolean append) {
+		Optional<RemoteFile> opFile = status.lookup(media);
+		opFile.ifPresent(file -> {
+			List<RemoteFile> remoteFiles = Arrays.asList(file);
+			if(!append) {
+				Media mediaID = status.getPlaylist().setAll(remoteFiles, 0, status.getTarget().isShuffled(), true);
+				status.getTarget().setTargetMedia(mediaID, true);
+			} else {
+				Media mediaID = status.getPlaylist().addAll(remoteFiles, 0, status.getTarget().isShuffled(), status.getPlayback().getCurrentMedia());
+				if(!status.getPlayback().getCurrentMedia().isPresent()) {
+					status.getTarget().setTargetMedia(mediaID, true);
+				}
+			}
+		});
+	}
+
+	static class MediaCell extends ListCell<Media>
+	{
+		@Override
+		protected void updateItem(Media item, boolean empty) {
+			super.updateItem(item, empty);
+			if(item != null) {
+				setText(new File(item.getPath()).getName());
+			} else setText(null);
 		}
 	}
 
@@ -299,8 +388,8 @@ public class PlayerWindow implements Initializable {
 		System.out.println(stage.getWidth()+" x "+stage.getHeight());
 
 		// default values, apply for bundled application
-//    	stage.setWidth(314);
-//    	stage.setHeight(398);
+    	stage.setWidth(314);
+    	stage.setHeight(402);
     }
 
     @FXML

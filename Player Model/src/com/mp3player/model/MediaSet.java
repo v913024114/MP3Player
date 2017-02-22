@@ -48,6 +48,13 @@ public class MediaSet {
 		listeners.forEach(l -> l.onAdded(e));
 	}
 
+	// lots of boilerplate objects
+	void add(List<Media> newList) {
+		list.addAll(newList);
+		MediaSetEvent e = new MediaSetEvent(this, Collections.unmodifiableList(newList));
+		listeners.forEach(l -> l.onAdded(e));
+	}
+
 	void remove(List<Media> newList) {
 		if(list.removeAll(newList)) {
 			MediaSetEvent e = new MediaSetEvent(this, Collections.unmodifiableList(newList));

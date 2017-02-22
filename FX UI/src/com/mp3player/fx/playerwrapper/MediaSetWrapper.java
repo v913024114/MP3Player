@@ -5,6 +5,7 @@ import com.mp3player.model.MediaSet;
 import com.mp3player.model.MediaSetEvent;
 import com.mp3player.player.data.Media;
 
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -36,17 +37,17 @@ public class MediaSetWrapper {
 
 			@Override
 			public void onWorkingChanged(MediaSetEvent e) {
-				working.set(mediaSet.isWorking());
+				Platform.runLater(() -> working.set(mediaSet.isWorking()));
 			}
 
 			@Override
 			public void onRemoved(MediaSetEvent e) {
-				items.removeAll(e.getSublist());
+				Platform.runLater(() -> items.removeAll(e.getSublist()));
 			}
 
 			@Override
 			public void onAdded(MediaSetEvent e) {
-				items.addAll(e.getSublist());
+				Platform.runLater(() -> items.addAll(e.getSublist()));
 			}
 		});
 	}

@@ -1,5 +1,6 @@
 package com.mp3player.fx.playerwrapper;
 
+import java.io.File;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -123,7 +124,7 @@ public class PlayerStatusWrapper {
 				status.getPlayback(),
 				() -> {
 					if(status.getPlayback().getBusyText() != null) return status.getPlayback().getBusyText();
-					return status.getPlayback().getCurrentMedia().map(m -> m.toString()).orElse(noMediaText);
+					return status.getPlayback().getCurrentMedia().map(m -> new File(m.getPath()).getName()).orElse(noMediaText);
 					});
 
 		mediaSelected = new DistributedBooleanProperty("mediaSelected", this,

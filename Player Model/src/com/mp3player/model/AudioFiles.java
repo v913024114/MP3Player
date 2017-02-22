@@ -1,4 +1,4 @@
-package com.mp3player.fx.app;
+package com.mp3player.model;
 
 import java.io.File;
 import java.util.Arrays;
