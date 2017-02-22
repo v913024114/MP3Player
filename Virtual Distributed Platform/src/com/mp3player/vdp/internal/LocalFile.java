@@ -32,19 +32,19 @@ public class LocalFile extends RemoteFile {
 	}
 
 	public static LocalFile createChild(LocalFile root, String relativePath) {
-		return new LocalFile(root.getPeer(), root, relativePath, new File(root.localFile(), relativePath));
+		return new LocalFile(root.getPeer(), root, relativePath, new File(root.localFile().getParent(), relativePath));
 	}
 
 
 	public LocalFile(Peer client, LocalFile root, String relativePath, File file) {
 		super(client);
-		this.root = root;
+		this.root = root != null ? root : this;
 		this.relativePath = relativePath;
 		this.file = file;
 	}
 
 	public boolean isRoot() {
-		return root == null;
+		return root == this;
 	}
 
 
@@ -129,4 +129,8 @@ public class LocalFile extends RemoteFile {
 		return file;
 	}
 
+	@Override
+	public String toString() {
+		return file.getPath();
+	}
 }
