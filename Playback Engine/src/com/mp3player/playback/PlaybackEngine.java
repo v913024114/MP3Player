@@ -6,21 +6,20 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.mp3player.audio2.javasound.JavaSoundEngine;
+import com.mp3player.desktopaudio.AudioDevice;
+import com.mp3player.desktopaudio.AudioEngine;
+import com.mp3player.desktopaudio.AudioEngineException;
+import com.mp3player.desktopaudio.LocalMediaFile;
+import com.mp3player.desktopaudio.MediaFile;
+import com.mp3player.desktopaudio.Player;
+import com.mp3player.model.PlayerStatus;
+import com.mp3player.player.data.MachineInfo;
+import com.mp3player.player.data.Media;
+import com.mp3player.player.data.PlaybackStatus;
+import com.mp3player.player.data.PlayerTarget;
+import com.mp3player.player.data.Speaker;
 import com.mp3player.vdp.RemoteFile;
-
-import mp3player.audio2.javasound.JavaSoundEngine;
-import mp3player.desktopaudio.AudioDevice;
-import mp3player.desktopaudio.AudioEngine;
-import mp3player.desktopaudio.AudioEngineException;
-import mp3player.desktopaudio.LocalMediaFile;
-import mp3player.desktopaudio.MediaFile;
-import mp3player.desktopaudio.Player;
-import mp3player.player.PlayerStatus;
-import mp3player.player.data.MachineInfo;
-import mp3player.player.data.Media;
-import mp3player.player.data.PlaybackStatus;
-import mp3player.player.data.PlayerTarget;
-import mp3player.player.data.Speaker;
 
 public class PlaybackEngine {
 	private PlayerStatus status;
