@@ -9,6 +9,7 @@ import com.mp3player.machine.LocalMachine;
 import com.mp3player.mediacommand.CombinationManager;
 import com.mp3player.mediacommand.MediaCommand;
 import com.mp3player.mediacommand.MediaCommandManager;
+import com.mp3player.model.MediaIndex;
 import com.mp3player.model.PlayerStatus;
 import com.mp3player.playback.PlaybackEngine;
 import com.mp3player.vdp.VDP;
@@ -26,7 +27,9 @@ public class Launcher extends Application {
 		VDP vdp = new VDP();
 
 		PlayerStatus status = new PlayerStatus(vdp);
-		PlayerWindow window = new PlayerWindow(status, primaryStage);
+		MediaIndex index = new MediaIndex(vdp);
+
+		PlayerWindow window = new PlayerWindow(status, index, primaryStage);
 		window.show();
 
 		addControl(window.getStatusWrapper());

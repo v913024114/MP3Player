@@ -13,7 +13,9 @@ import com.aquafx_project.AquaFx;
 import com.mp3player.fx.FileDropOverlay;
 import com.mp3player.fx.PlayerControl;
 import com.mp3player.fx.icons.FXIcons;
+import com.mp3player.fx.playerwrapper.MediaIndexWrapper;
 import com.mp3player.fx.playerwrapper.PlayerStatusWrapper;
+import com.mp3player.model.MediaIndex;
 import com.mp3player.model.PlayerStatus;
 import com.mp3player.player.data.Media;
 import com.mp3player.player.data.Speaker;
@@ -62,7 +64,7 @@ public class PlayerWindow implements Initializable {
 	@FXML private MenuBar menuBar;
 	@FXML private Slider volume;
 	@FXML private ComboBox<Speaker> speakerSelection;
-	@FXML private ListView<Media> playlist;
+	@FXML private ListView<Media> playlist, searchResult;
 	@FXML private TextField searchField;
 	@FXML private Button removeOthersButton;
 	private Pane playlistRoot, searchRoot;
@@ -71,12 +73,14 @@ public class PlayerWindow implements Initializable {
 
 	private PlayerStatus status;
 	private PlayerStatusWrapper properties;
+	private MediaIndexWrapper index;
 
 
-	public PlayerWindow(PlayerStatus status, Stage stage) throws IOException {
+	public PlayerWindow(PlayerStatus status, MediaIndex index, Stage stage) throws IOException {
 		this.stage = stage;
 		this.status = status;
 		properties = new PlayerStatusWrapper(status);
+		this.index = new MediaIndexWrapper(index);
 
 		root = new StackPane();
 		root.getChildren().add(loadPlayer());
@@ -286,6 +290,7 @@ public class PlayerWindow implements Initializable {
 		}
 		else {
 			// Initialize search view
+			searchResult.setItems(index.getRecentlyUsed().getItems());
 		}
 	}
 

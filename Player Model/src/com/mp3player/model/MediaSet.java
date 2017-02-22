@@ -20,7 +20,7 @@ public class MediaSet {
 	}
 
 
-	public List<Media> getList() {
+	public List<Media> getItems() {
 		return Collections.unmodifiableList(list);
 	}
 

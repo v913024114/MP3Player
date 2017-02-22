@@ -12,7 +12,9 @@ public class Media implements Serializable {
 	private String peerID;
 	private String path;
 
+	private String machinePath;
 	private long modificationDate;
+
 	private OptionalDouble duration;
 	private Map<String, String> metaData;
 
