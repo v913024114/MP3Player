@@ -37,10 +37,20 @@ public class LocalPeer implements Peer {
 
 	@Override
 	public RemoteFile getFile(String path) {
-		for(RemoteFile file : rootFiles) {
-			if(file.getPath().equals(path)) return file;
+		String rootName = path;
+		if(rootName.contains("/")) {
+			rootName = rootName.substring(0, path.indexOf("/"));
 		}
-		throw new UnsupportedOperationException("not implemented"); // TODO
+		if(rootName.contains("\\")) {
+			rootName = rootName.substring(0, path.indexOf("\\"));
+		}
+		LocalFile root = null;
+		for(RemoteFile file : rootFiles) {
+			if(file.getPath().equals(rootName)) root = (LocalFile) file;
+		}
+		if(root == null) throw new IllegalArgumentException("Not found: "+path);
+		if(path.equals(rootName)) return root;
+		return LocalFile.createChild(root, path.substring(rootName.length()+1));
 	}
 
 	public RemoteFile mount(File file) {
