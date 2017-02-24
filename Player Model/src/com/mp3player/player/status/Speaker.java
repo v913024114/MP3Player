@@ -1,4 +1,4 @@
-package com.mp3player.player.data;
+package com.mp3player.player.status;
 
 public class Speaker {
 	private String peerID;

@@ -12,10 +12,10 @@ import java.util.function.DoubleConsumer;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
-import com.mp3player.model.PlayerStatus;
-import com.mp3player.player.data.MachineInfo;
-import com.mp3player.player.data.Media;
-import com.mp3player.player.data.Speaker;
+import com.mp3player.model.Identifier;
+import com.mp3player.player.status.MachineInfo;
+import com.mp3player.player.status.PlayerStatus;
+import com.mp3player.player.status.Speaker;
 import com.mp3player.vdp.DataEvent;
 import com.mp3player.vdp.DataListener;
 import com.mp3player.vdp.Distributed;
@@ -86,13 +86,13 @@ public class PlayerStatusWrapper {
 	public void setShuffled(boolean value) { shuffled.set(value); }
 	public BooleanProperty shuffledProperty() { return shuffled; }
 
-	private ObservableList<Media> playlist;
-	public ObservableList<Media> getPlaylist() { return playlist; }
+	private ObservableList<Identifier> playlist;
+	public ObservableList<Identifier> getPlaylist() { return playlist; }
 
-	private ObjectProperty<Optional<Media>> currentMedia;
-	public Optional<Media> getCurrentMedia() { return currentMedia.get(); }
-	public void setCurrentMedia(Optional<Media> value) { currentMedia.set(value); }
-	public ObjectProperty<Optional<Media>> currentMediaProperty() { return currentMedia; }
+	private ObjectProperty<Optional<Identifier>> currentMedia;
+	public Optional<Identifier> getCurrentMedia() { return currentMedia.get(); }
+	public void setCurrentMedia(Optional<Identifier> value) { currentMedia.set(value); }
+	public ObjectProperty<Optional<Identifier>> currentMediaProperty() { return currentMedia; }
 
 	private ObservableList<Speaker> speakers;
 	public ObservableList<Speaker> getSpeakers() { return speakers; }

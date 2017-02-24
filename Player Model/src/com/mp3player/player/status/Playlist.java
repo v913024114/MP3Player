@@ -1,4 +1,4 @@
-package com.mp3player.player.data;
+package com.mp3player.player.status;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.mp3player.model.Identifier;
 import com.mp3player.vdp.Conflict;
 import com.mp3player.vdp.Distributed;
 import com.mp3player.vdp.RemoteFile;
@@ -24,7 +25,7 @@ public class Playlist extends Distributed {
 
 	public static final String VDP_ID = "playlist";
 
-	private List<Media> list = new ArrayList<>();
+	private List<Identifier> list = new ArrayList<>();
 
 	public Playlist() {
 		super(VDP_ID, true, false);
@@ -36,7 +37,7 @@ public class Playlist extends Distributed {
 		return null;
 	}
 
-	public List<Media> list() {
+	public List<Identifier> list() {
 		return new ArrayList<>(list);
 	}
 
@@ -44,17 +45,17 @@ public class Playlist extends Distributed {
 		return list.size();
 	}
 
-	public Optional<Media> first() {
+	public Optional<Identifier> first() {
 		if(isEmpty()) return Optional.empty();
 		return Optional.of(list.get(0));
 	}
 
-	public Optional<Media> last() {
+	public Optional<Identifier> last() {
 		if(isEmpty()) return Optional.empty();
 		return Optional.of(list.get(size()-1));
 	}
 
-	public Optional<Media> getNext(Optional<Media> current, boolean loop) throws IllegalArgumentException {
+	public Optional<Identifier> getNext(Optional<Identifier> current, boolean loop) throws IllegalArgumentException {
 		if(isEmpty()) return Optional.empty();
 		if(!current.isPresent()) return first();
 
@@ -69,7 +70,7 @@ public class Playlist extends Distributed {
 			return Optional.empty();
 	}
 
-	public Optional<Media> getPrevious(Optional<Media> mediaID, boolean loop) throws IllegalArgumentException {
+	public Optional<Identifier> getPrevious(Optional<Identifier> mediaID, boolean loop) throws IllegalArgumentException {
 		if(isEmpty()) return Optional.empty();
 		if(!mediaID.isPresent()) return first();
 
@@ -84,29 +85,29 @@ public class Playlist extends Distributed {
 			return Optional.empty();
 	}
 
-	public Media setAll(List<RemoteFile> files, int returnIDIndex, boolean shuffle, boolean firstStayFirst) {
+	public Identifier setAll(List<RemoteFile> files, int returnIDIndex, boolean shuffle, boolean firstStayFirst) {
 		_clear();
-		List<Media> newList = files.stream().map(file -> _add(file)).collect(Collectors.toList());
-		Media returnID = returnIDIndex >= 0 ? newList.get(returnIDIndex) : null;
+		List<Identifier> newList = files.stream().map(file -> _add(file)).collect(Collectors.toList());
+		Identifier returnID = returnIDIndex >= 0 ? newList.get(returnIDIndex) : null;
 		if(shuffle) _shuffle(Optional.of(returnID));
 		fireChangedLocally();
 		return returnID;
 	}
 
-	public Media addAll(List<RemoteFile> files, int returnIDIndex, boolean shuffle, Optional<Media> shuffleToFirst) {
-		List<Media> newList = files.stream().map(file -> _add(file)).collect(Collectors.toList());
-		Media returnID = returnIDIndex >= 0 ? newList.get(returnIDIndex) : null;
+	public Identifier addAll(List<RemoteFile> files, int returnIDIndex, boolean shuffle, Optional<Identifier> shuffleToFirst) {
+		List<Identifier> newList = files.stream().map(file -> _add(file)).collect(Collectors.toList());
+		Identifier returnID = returnIDIndex >= 0 ? newList.get(returnIDIndex) : null;
 		if(shuffle) _shuffle(shuffleToFirst);
 		fireChangedLocally();
 		return returnID;
 	}
 
-	public void shuffle(Optional<Media> makeFirst) {
+	public void shuffle(Optional<Identifier> makeFirst) {
 		_shuffle(makeFirst);
 		fireChangedLocally();
 	}
 
-	private void _shuffle(Optional<Media> makeFirst) {
+	private void _shuffle(Optional<Identifier> makeFirst) {
 		Collections.shuffle(list);
 		makeFirst.ifPresent(first -> {
 			if(list.remove(first)) list.add(0, first);
@@ -114,14 +115,14 @@ public class Playlist extends Distributed {
 		});
 	}
 
-	private Media _add(RemoteFile file) {
-		Media media = new Media(file.getPeer().getID(), file.getPath());
+	private Identifier _add(RemoteFile file) {
+		Identifier media = new Identifier(file.getPeer().getID(), file.getPath());
 		list.add(media);
 		return media;
 	}
 
-	public Media add(RemoteFile file) {
-		Media media = _add(file);
+	public Identifier add(RemoteFile file) {
+		Identifier media = _add(file);
 		fireChangedLocally();
 		return media;
 	}
@@ -139,7 +140,7 @@ public class Playlist extends Distributed {
 		return list.isEmpty();
 	}
 
-	public void setAll(List<Media> newList) {
+	public void setAll(List<Identifier> newList) {
 		list.clear();
 		list.addAll(newList);
 		fireChangedLocally();

@@ -1,9 +1,9 @@
 package com.mp3player.fx.playerwrapper;
 
+import com.mp3player.model.MediaInfo;
 import com.mp3player.model.MediaSelectionListener;
 import com.mp3player.model.MediaSet;
 import com.mp3player.model.MediaSetEvent;
-import com.mp3player.player.data.Media;
 
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
@@ -16,8 +16,8 @@ public class MediaSetWrapper {
 	private MediaSet mediaSet;
 
 
-	private ObservableList<Media> items;
-	public ObservableList<Media> getItems() { return items; }
+	private ObservableList<MediaInfo> items;
+	public ObservableList<MediaInfo> getItems() { return items; }
 
 
 	private BooleanProperty working;

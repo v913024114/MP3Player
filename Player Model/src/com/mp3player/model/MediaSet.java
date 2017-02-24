@@ -5,10 +5,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import com.mp3player.player.data.Media;
-
 public class MediaSet {
-	private List<Media> list;
+	private List<MediaInfo> list;
 	private boolean working;
 
 	private List<MediaSelectionListener> listeners = new CopyOnWriteArrayList<>();
@@ -20,7 +18,7 @@ public class MediaSet {
 	}
 
 
-	public List<Media> getItems() {
+	public List<MediaInfo> getItems() {
 		return Collections.unmodifiableList(list);
 	}
 
@@ -42,20 +40,20 @@ public class MediaSet {
 		listeners.forEach(l -> l.onWorkingChanged(e));
 	}
 
-	void add(int index, List<Media> newList) {
+	void add(int index, List<MediaInfo> newList) {
 		list.addAll(index, newList);
 		MediaSetEvent e = new MediaSetEvent(this, Collections.unmodifiableList(newList));
 		listeners.forEach(l -> l.onAdded(e));
 	}
 
 	// lots of boilerplate objects
-	void add(List<Media> newList) {
+	void add(List<MediaInfo> newList) {
 		list.addAll(newList);
 		MediaSetEvent e = new MediaSetEvent(this, Collections.unmodifiableList(newList));
 		listeners.forEach(l -> l.onAdded(e));
 	}
 
-	void remove(List<Media> newList) {
+	void remove(List<MediaInfo> newList) {
 		if(list.removeAll(newList)) {
 			MediaSetEvent e = new MediaSetEvent(this, Collections.unmodifiableList(newList));
 			listeners.forEach(l -> l.onRemoved(e));

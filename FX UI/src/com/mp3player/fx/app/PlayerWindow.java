@@ -17,10 +17,11 @@ import com.mp3player.fx.icons.FXIcons;
 import com.mp3player.fx.playerwrapper.MediaIndexWrapper;
 import com.mp3player.fx.playerwrapper.PlayerStatusWrapper;
 import com.mp3player.model.AudioFiles;
+import com.mp3player.model.Identifier;
 import com.mp3player.model.MediaIndex;
-import com.mp3player.model.PlayerStatus;
-import com.mp3player.player.data.Media;
-import com.mp3player.player.data.Speaker;
+import com.mp3player.model.MediaInfo;
+import com.mp3player.player.status.PlayerStatus;
+import com.mp3player.player.status.Speaker;
 import com.mp3player.vdp.RemoteFile;
 
 import javafx.animation.FadeTransition;
@@ -74,11 +75,11 @@ public class PlayerWindow implements Initializable {
 	// Playlist
 	private Pane playlistRoot;
 	@FXML private Button removeOthersButton;
-	@FXML private ListView<Media> playlist;
+	@FXML private ListView<Identifier> playlist;
 
 	// Search
 	private Pane searchRoot;
-	@FXML private ListView<Media> searchResult;
+	@FXML private ListView<MediaInfo> searchResult;
 	@FXML private TextField searchField;
 
 	private PlayerControl control;
@@ -174,7 +175,7 @@ public class PlayerWindow implements Initializable {
 			ToggleButton append = new ToggleButton("Add to playlist", FXIcons.get("Append.png", 32));
 			append.setOnAction(e -> {
 				List<RemoteFile> remoteFiles = audioFiles.stream().map(file -> status.getVdp().mountFile(file)).collect(Collectors.toList());
-				Media mediaID = status.getPlaylist().addAll(remoteFiles, 0, status.getTarget().isShuffled(), status.getPlayback().getCurrentMedia());
+				Identifier mediaID = status.getPlaylist().addAll(remoteFiles, 0, status.getTarget().isShuffled(), status.getPlayback().getCurrentMedia());
 				if(!status.getPlayback().getCurrentMedia().isPresent()) {
 					status.getTarget().setTargetMedia(mediaID, true);
 				}
@@ -200,7 +201,7 @@ public class PlayerWindow implements Initializable {
 	public void play(List<File> localFiles, File startFile) {
 		int startIndex = localFiles.indexOf(startFile);
 		List<RemoteFile> remoteFiles = localFiles.stream().map(file -> status.getVdp().mountFile(file)).collect(Collectors.toList());
-		Media mediaID = status.getPlaylist().setAll(remoteFiles, startIndex, status.getTarget().isShuffled(), true);
+		Identifier mediaID = status.getPlaylist().setAll(remoteFiles, startIndex, status.getTarget().isShuffled(), true);
 		status.getTarget().setTargetMedia(mediaID, true);
 	}
 
@@ -299,7 +300,7 @@ public class PlayerWindow implements Initializable {
 					Platform.runLater(() -> closePlaylist());
 				}
 			});
-			playlist.setCellFactory(list -> new MediaCell());
+			playlist.setCellFactory(list -> new IdentifierCell());
 		}
 		else {
 			// Initialize search view
@@ -308,10 +309,10 @@ public class PlayerWindow implements Initializable {
 					searchResult.setItems(index.getRecentlyUsed().getItems());
 				} else {
 					String lowerCase = n.toLowerCase();
-					searchResult.setItems(index.startSearch(media -> media.getPath().toLowerCase().contains(lowerCase)).getItems());
+					searchResult.setItems(index.startSearch(media -> media.getRelativePath().toLowerCase().contains(lowerCase)).getItems());
 				}
 				if(!searchResult.getItems().isEmpty()) searchResult.getSelectionModel().select(0);
-				searchResult.getItems().addListener((ListChangeListener<Media>) change -> {
+				searchResult.getItems().addListener((ListChangeListener<MediaInfo>) change -> {
 					if(!searchResult.getItems().isEmpty()) searchResult.getSelectionModel().select(0);
 				});
 			});
@@ -319,18 +320,18 @@ public class PlayerWindow implements Initializable {
 			searchResult.setCellFactory(list -> new MediaCell());
 			searchResult.setOnKeyPressed(e -> {
 				if(e.getCode() == KeyCode.ENTER) {
-					Media m = searchResult.getSelectionModel().getSelectedItem();
+					MediaInfo m = searchResult.getSelectionModel().getSelectedItem();
 					if(m != null) {
-						playFromLibrary(m, e.isControlDown());
+						playFromLibrary(m.getIdentifier(), e.isControlDown());
 					}
 					Platform.runLater(() -> closeSearch());
 				}
 			});
 			searchField.setOnKeyPressed(e -> {
 				if(e.getCode() == KeyCode.ENTER) {
-					Media m = searchResult.getSelectionModel().getSelectedItem();
+					MediaInfo m = searchResult.getSelectionModel().getSelectedItem();
 					if(m != null) {
-						playFromLibrary(m, e.isControlDown());
+						playFromLibrary(m.getIdentifier(), e.isControlDown());
 					}
 					e.consume();
 					Platform.runLater(() -> closeSearch());
@@ -346,9 +347,9 @@ public class PlayerWindow implements Initializable {
 			});
 			searchResult.setOnMouseReleased(e -> {
 				if(e.getButton() == MouseButton.PRIMARY) {
-					Media m = searchResult.getSelectionModel().getSelectedItem();
+					MediaInfo m = searchResult.getSelectionModel().getSelectedItem();
 					if(m != null && (!properties.getCurrentMedia().isPresent() || !m.equals(properties.getCurrentMedia()))) {
-						playFromLibrary(m, e.isControlDown());
+						playFromLibrary(m.getIdentifier(), e.isControlDown());
 					}
 					Platform.runLater(() -> closeSearch());
 				}
@@ -356,15 +357,15 @@ public class PlayerWindow implements Initializable {
 		}
 	}
 
-	private void playFromLibrary(Media media, boolean append) {
-		Optional<RemoteFile> opFile = status.lookup(media);
+	private void playFromLibrary(Identifier media, boolean append) {
+		Optional<RemoteFile> opFile = media.lookup(status.getVdp());
 		opFile.ifPresent(file -> {
 			List<RemoteFile> remoteFiles = Arrays.asList(file);
 			if(!append) {
-				Media mediaID = status.getPlaylist().setAll(remoteFiles, 0, status.getTarget().isShuffled(), true);
+				Identifier mediaID = status.getPlaylist().setAll(remoteFiles, 0, status.getTarget().isShuffled(), true);
 				status.getTarget().setTargetMedia(mediaID, true);
 			} else {
-				Media mediaID = status.getPlaylist().addAll(remoteFiles, 0, status.getTarget().isShuffled(), status.getPlayback().getCurrentMedia());
+				Identifier mediaID = status.getPlaylist().addAll(remoteFiles, 0, status.getTarget().isShuffled(), status.getPlayback().getCurrentMedia());
 				if(!status.getPlayback().getCurrentMedia().isPresent()) {
 					status.getTarget().setTargetMedia(mediaID, true);
 				}
@@ -372,13 +373,24 @@ public class PlayerWindow implements Initializable {
 		});
 	}
 
-	static class MediaCell extends ListCell<Media>
+	static class IdentifierCell extends ListCell<Identifier>
 	{
 		@Override
-		protected void updateItem(Media item, boolean empty) {
+		protected void updateItem(Identifier item, boolean empty) {
 			super.updateItem(item, empty);
 			if(item != null) {
-				setText(new File(item.getPath()).getName());
+				setText(item.inferTitle());
+			} else setText(null);
+		}
+	}
+
+	static class MediaCell extends ListCell<MediaInfo>
+	{
+		@Override
+		protected void updateItem(MediaInfo item, boolean empty) {
+			super.updateItem(item, empty);
+			if(item != null) {
+				setText(item.getDisplayTitle());
 			} else setText(null);
 		}
 	}
@@ -406,7 +418,7 @@ public class PlayerWindow implements Initializable {
 
     @FXML
     public void clearOthers() {
-    	List<Media> newList = new ArrayList<>();
+    	List<Identifier> newList = new ArrayList<>();
     	properties.getStatus().getPlayback().getCurrentMedia().ifPresent(m -> newList.add(m));
     	properties.getStatus().getPlaylist().setAll(newList);
     }

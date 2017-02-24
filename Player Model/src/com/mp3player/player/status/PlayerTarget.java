@@ -1,8 +1,9 @@
-package com.mp3player.player.data;
+package com.mp3player.player.status;
 
 import java.util.Optional;
 import java.util.OptionalDouble;
 
+import com.mp3player.model.Identifier;
 import com.mp3player.vdp.Conflict;
 import com.mp3player.vdp.Distributed;
 
@@ -24,7 +25,7 @@ public class PlayerTarget extends Distributed {
 	/**
 	 * if empty, dispose of player
 	 */
-	private Optional<Media> targetMedia = Optional.empty();
+	private Optional<Identifier> targetMedia = Optional.empty();
 
 	private double targetGain;
 	private boolean targetMute;
@@ -56,15 +57,15 @@ public class PlayerTarget extends Distributed {
 		fireChangedLocally();
 	}
 
-	public Optional<Media> getTargetMedia() {
+	public Optional<Identifier> getTargetMedia() {
 		return targetMedia;
 	}
 
-	public void setTargetMedia(Media targetMedia, boolean startPlayingImmediately) {
+	public void setTargetMedia(Identifier targetMedia, boolean startPlayingImmediately) {
 		setTargetMedia(Optional.of(targetMedia), startPlayingImmediately);
 	}
 
-	public void setTargetMedia(Optional<Media> targetMedia, boolean startPlayingImmediately) {
+	public void setTargetMedia(Optional<Identifier> targetMedia, boolean startPlayingImmediately) {
 		this.targetMedia = targetMedia;
 		if (startPlayingImmediately) {
 			targetPlaying = true;

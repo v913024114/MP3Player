@@ -10,8 +10,8 @@ import com.mp3player.mediacommand.CombinationManager;
 import com.mp3player.mediacommand.MediaCommand;
 import com.mp3player.mediacommand.MediaCommandManager;
 import com.mp3player.model.MediaIndex;
-import com.mp3player.model.PlayerStatus;
 import com.mp3player.playback.PlaybackEngine;
+import com.mp3player.player.status.PlayerStatus;
 import com.mp3player.vdp.VDP;
 
 import javafx.application.Application;

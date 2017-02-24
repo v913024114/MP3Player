@@ -13,12 +13,12 @@ import com.mp3player.desktopaudio.AudioEngineException;
 import com.mp3player.desktopaudio.LocalMediaFile;
 import com.mp3player.desktopaudio.MediaFile;
 import com.mp3player.desktopaudio.Player;
-import com.mp3player.model.PlayerStatus;
-import com.mp3player.player.data.MachineInfo;
-import com.mp3player.player.data.Media;
-import com.mp3player.player.data.PlaybackStatus;
-import com.mp3player.player.data.PlayerTarget;
-import com.mp3player.player.data.Speaker;
+import com.mp3player.model.Identifier;
+import com.mp3player.player.status.MachineInfo;
+import com.mp3player.player.status.PlaybackStatus;
+import com.mp3player.player.status.PlayerStatus;
+import com.mp3player.player.status.PlayerTarget;
+import com.mp3player.player.status.Speaker;
 import com.mp3player.vdp.RemoteFile;
 
 public class PlaybackEngine {
@@ -29,7 +29,7 @@ public class PlaybackEngine {
 	private final List<String> supportedTypes;
 
 	private Optional<RemoteFile> currentFile = Optional.empty(); // locally playing media
-	private Optional<Media> currentMediaID = Optional.empty();
+	private Optional<Identifier> currentMediaID = Optional.empty();
 	private Player player;
 	private long lastPositionUpdate;
 
@@ -85,7 +85,7 @@ public class PlaybackEngine {
 			publishInfo();
 
 			currentMediaID = target.getTargetMedia();
-			currentFile = status.lookup(currentMediaID);
+			currentFile = Identifier.lookup(currentMediaID, status.getVdp());
 
 			if(currentFile.isPresent()) {
 				MediaFile file;

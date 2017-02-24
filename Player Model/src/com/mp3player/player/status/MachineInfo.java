@@ -1,4 +1,4 @@
-package com.mp3player.player.data;
+package com.mp3player.player.status;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -1,9 +1,10 @@
-package com.mp3player.player.data;
+package com.mp3player.player.status;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import com.mp3player.model.Identifier;
 import com.mp3player.vdp.Conflict;
 import com.mp3player.vdp.Distributed;
 
@@ -23,7 +24,7 @@ public class PlaybackStatus extends Distributed {
 	private Optional<Speaker> device = Optional.empty();
 	private List<String> supportedFormats = Collections.emptyList();
 
-	private Optional<Media> currentMedia = Optional.empty(); // media ID
+	private Optional<Identifier> currentMedia = Optional.empty(); // media ID
 
 	private double gain;
 	private boolean mute;
@@ -46,7 +47,7 @@ public class PlaybackStatus extends Distributed {
 		return null;
 	}
 
-	public void setStatus(Optional<Speaker> device, List<String> supportedFormats, Optional<Media> currentMedia, double gain,
+	public void setStatus(Optional<Speaker> device, List<String> supportedFormats, Optional<Identifier> currentMedia, double gain,
 			boolean mute, boolean playing, boolean busy, String busyText,
 			double lastKnownPosition, long lastUpdateTime, double duration) {
 		if(currentMedia == null) throw new IllegalArgumentException("currentMedia = null");
@@ -81,7 +82,7 @@ public class PlaybackStatus extends Distributed {
 		return device;
 	}
 
-	public Optional<Media> getCurrentMedia() {
+	public Optional<Identifier> getCurrentMedia() {
 		return currentMedia;
 	}
 

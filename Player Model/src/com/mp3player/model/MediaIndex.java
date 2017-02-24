@@ -10,8 +10,7 @@ import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
-import com.mp3player.player.data.Media;
-import com.mp3player.player.data.PlaybackStatus;
+import com.mp3player.player.status.PlaybackStatus;
 import com.mp3player.vdp.Distributed;
 import com.mp3player.vdp.RemoteFile;
 import com.mp3player.vdp.VDP;
@@ -44,23 +43,25 @@ public class MediaIndex {
 	}
 
 
-	public Media get(RemoteFile file) {
-		// TODO
-		Media media = new Media(vdp.getLocalPeer().getID(), file.getPath());
-		return media;
+	public MediaInfo getInfo(RemoteFile file) {
+		if(file.isDirectory()) throw new IllegalArgumentException("directory not allowed");
+		else return new MediaInfo(file);
 	}
 
 	public MediaSet startSearch(MediaFilter filter) {
 		MediaSet set = new MediaSet();
 		new Thread(() -> {
-			List<Media> searchList = localIndex.getItems().stream().filter(filter).collect(Collectors.toList());
+			List<MediaInfo> searchList = localIndex.getItems().stream().filter(filter).collect(Collectors.toList());
 			set.add(searchList);
 			set.setWorking(false);
 		}).start();
 		return set;
 	}
 
-	private void addToRecentlyUsed(Media media) {
+	private void addToRecentlyUsed(Identifier id) {
+		Optional<MediaInfo> opMedia = id.lookup(vdp).map(file -> getInfo(file));
+		if(!opMedia.isPresent()) return;
+		MediaInfo media = opMedia.get();
 		recentlyUsed.remove(Arrays.asList(media));
 		recentlyUsed.add(0, Arrays.asList(media));
 	}
@@ -80,13 +81,13 @@ public class MediaIndex {
 		} catch (UnsupportedOperationException | IOException e) {
 			return;
 		}
-		List<Media> mediaList = new ArrayList<>();
+		List<MediaInfo> mediaList = new ArrayList<>();
 		List<RemoteFile> subdirs = new ArrayList<>();
 
 		for(RemoteFile file : files) {
 			if(file.isDirectory()) subdirs.add(file);
 			else if(AudioFiles.isAudioFile(file.getName())){
-				mediaList.add(get(file));
+				mediaList.add(getInfo(file));
 			}
 		}
 

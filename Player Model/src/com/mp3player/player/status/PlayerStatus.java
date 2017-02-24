@@ -1,13 +1,9 @@
-package com.mp3player.model;
+package com.mp3player.player.status;
 
 import java.io.IOException;
 import java.util.Optional;
 
-import com.mp3player.player.data.MachineInfo;
-import com.mp3player.player.data.Media;
-import com.mp3player.player.data.PlaybackStatus;
-import com.mp3player.player.data.PlayerTarget;
-import com.mp3player.player.data.Playlist;
+import com.mp3player.model.Identifier;
 import com.mp3player.vdp.Peer;
 import com.mp3player.vdp.RemoteFile;
 import com.mp3player.vdp.VDP;
@@ -52,14 +48,14 @@ public class PlayerStatus {
 		return playlist;
 	}
 
-	public Optional<Media> getNext() {
+	public Optional<Identifier> getNext() {
 		return playlist.getNext(playback.getCurrentMedia(), target.isLoop());
 	}
 	public void next() {
 		target.setTargetMedia(getNext(), true);
 	}
 
-	public Optional<Media> getPrevious() {
+	public Optional<Identifier> getPrevious() {
 		return playlist.getPrevious(playback.getCurrentMedia(), target.isLoop());
 	}
 	public void previous() {
@@ -67,19 +63,5 @@ public class PlayerStatus {
 	}
 
 
-	public Optional<RemoteFile> lookup(Media media) {
-		if(media == null) return Optional.empty();
-		return Optional.ofNullable(vdp.getPeer(media.getPeerID())).map(peer -> {
-			try {
-				return peer.getFile(media.getPath());
-			} catch (IOException e) {
-				return null;
-			}
-		});
-	}
-
-	public Optional<RemoteFile> lookup(Optional<Media> optionalMedia) {
-		return optionalMedia.map(media -> lookup(media)).orElse(Optional.empty());
-	}
 
 }
