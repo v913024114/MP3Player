@@ -36,26 +36,27 @@ public class MediaSet {
 
 	void setWorking(boolean working) {
 		this.working = working;
-		MediaSetEvent e = new MediaSetEvent(this, null);
+		MediaSetEvent e = new MediaSetEvent(this, -1, null);
 		listeners.forEach(l -> l.onWorkingChanged(e));
 	}
 
 	void add(int index, List<MediaInfo> newList) {
 		list.addAll(index, newList);
-		MediaSetEvent e = new MediaSetEvent(this, Collections.unmodifiableList(newList));
+		MediaSetEvent e = new MediaSetEvent(this, index, Collections.unmodifiableList(newList));
 		listeners.forEach(l -> l.onAdded(e));
 	}
 
 	// lots of boilerplate objects
 	void add(List<MediaInfo> newList) {
+		int index = list.size();
 		list.addAll(newList);
-		MediaSetEvent e = new MediaSetEvent(this, Collections.unmodifiableList(newList));
+		MediaSetEvent e = new MediaSetEvent(this, index, Collections.unmodifiableList(newList));
 		listeners.forEach(l -> l.onAdded(e));
 	}
 
 	void remove(List<MediaInfo> newList) {
 		if(list.removeAll(newList)) {
-			MediaSetEvent e = new MediaSetEvent(this, Collections.unmodifiableList(newList));
+			MediaSetEvent e = new MediaSetEvent(this, -1, Collections.unmodifiableList(newList));
 			listeners.forEach(l -> l.onRemoved(e));
 		}
 	}

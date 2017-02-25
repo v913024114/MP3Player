@@ -81,13 +81,13 @@
                 <Menu fx:id="currentSongMenu" mnemonicParsing="false" text="Song title">
                   <items>
                         <MenuItem mnemonicParsing="false" text="File information..." />
-                        <MenuItem mnemonicParsing="false" text="Open file location..." />
+                        <MenuItem mnemonicParsing="false" onAction="#openFileLocation" text="Open file location..." />
                         <MenuItem mnemonicParsing="false" text="Add to library...">
                            <accelerator>
                               <KeyCodeCombination alt="UP" code="A" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
                            </accelerator></MenuItem>
                         <SeparatorMenuItem mnemonicParsing="false" />
-                        <MenuItem mnemonicParsing="false" text="Remove from playlist">
+                        <MenuItem mnemonicParsing="false" onAction="#removeCurrentFromPlaylist" text="Remove from playlist">
                            <accelerator>
                               <KeyCodeCombination alt="UP" code="X" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
                            </accelerator>

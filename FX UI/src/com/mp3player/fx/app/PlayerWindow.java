@@ -1,11 +1,13 @@
 package com.mp3player.fx.app;
 
+import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
@@ -39,6 +41,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -158,9 +161,9 @@ public class PlayerWindow implements Initializable {
 	}
 
 	private List<ToggleButton> generateDropButtons(List<File> files) {
-		List<ToggleButton> result = new ArrayList<>(4);
+		List<ToggleButton> result = new ArrayList<>(3);
 
-		List<File> audioFiles = AudioFiles.trim(files);
+		List<File> audioFiles = AudioFiles.trim(AudioFiles.unfold(files));
 		boolean cold = status.getPlaylist().isEmpty();
 
 		// Play / New Playlist
@@ -432,5 +435,34 @@ public class PlayerWindow implements Initializable {
     	info.initOwner(stage);
     	info.initModality(Modality.NONE);
     	info.show();
+    }
+
+    @FXML
+    public void openFileLocation() {
+    	status.getPlayback().getCurrentMedia().flatMap(id -> id.lookup(status.getVdp())).ifPresent(file -> {
+    		if(file.localFile() != null) {
+    			try {
+					Desktop.getDesktop().browse(file.localFile().getParentFile().toURI());
+				} catch (NoSuchElementException | IOException e) {
+					e.printStackTrace();
+					new Alert(AlertType.ERROR, "Could not open location: "+file.localFile(), ButtonType.OK).show();
+				}
+    		} else {
+    			new Alert(AlertType.INFORMATION, "The file is not located on this machine.", ButtonType.OK).show();
+    		}
+    	});
+    }
+
+    @FXML
+    public void removeCurrentFromPlaylist() {
+    	Optional<Identifier> current = status.getPlayback().getCurrentMedia();
+    	if(!current.isPresent()) return;
+
+    	boolean hasNext = status.getNext() != current;
+    	if(hasNext) {
+    		status.next();
+    	}
+    	status.getPlaylist().remove(current.get());
+    	if(!hasNext) status.next();
     }
 }

@@ -47,7 +47,7 @@ public class MediaSetWrapper {
 
 			@Override
 			public void onAdded(MediaSetEvent e) {
-				Platform.runLater(() -> items.addAll(e.getSublist()));
+				Platform.runLater(() -> items.addAll(e.getIndex(), e.getSublist()));
 			}
 		});
 	}

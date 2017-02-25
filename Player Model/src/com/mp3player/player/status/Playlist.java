@@ -87,9 +87,12 @@ public class Playlist extends Distributed {
 
 	public Identifier setAll(List<RemoteFile> files, int returnIDIndex, boolean shuffle, boolean firstStayFirst) {
 		_clear();
-		List<Identifier> newList = files.stream().map(file -> _add(file)).collect(Collectors.toList());
-		Identifier returnID = returnIDIndex >= 0 ? newList.get(returnIDIndex) : null;
-		if(shuffle) _shuffle(Optional.of(returnID));
+		Identifier returnID = null;
+		if(!files.isEmpty()) {
+			List<Identifier> newList = files.stream().map(file -> _add(file)).collect(Collectors.toList());
+			returnID = returnIDIndex >= 0 ? newList.get(returnIDIndex) : newList.get(0);
+			if(shuffle) _shuffle(Optional.of(returnID));
+		}
 		fireChangedLocally();
 		return returnID;
 	}
@@ -144,6 +147,11 @@ public class Playlist extends Distributed {
 		list.clear();
 		list.addAll(newList);
 		fireChangedLocally();
+	}
+
+	public void remove(Identifier identifier) {
+		boolean removed = list.remove(identifier);
+		if(removed) fireChangedLocally();
 	}
 
 }

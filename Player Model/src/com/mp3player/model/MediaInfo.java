@@ -160,4 +160,9 @@ public class MediaInfo implements Serializable {
 	public String getDisplayTitle() {
 		return getTitle().orElse(media.inferTitle());
 	}
+
+	@Override
+	public String toString() {
+		return media.toString();
+	}
 }

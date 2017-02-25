@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
@@ -22,6 +24,8 @@ public class MediaIndex {
 	private MediaSet recentlyUsed;
 	private MediaSet localIndex; // no directories directly contained
 
+	private Map<RemoteFile, MediaInfo> infoMap;
+
 	private List<MediaIndexListener> listeners = new CopyOnWriteArrayList<>();
 
 
@@ -35,6 +39,8 @@ public class MediaIndex {
 		recentlyUsed.setWorking(false);
 		localIndex = new MediaSet();
 
+		infoMap = new HashMap<>();
+
 		Optional<Distributed> playback = vdp.getData(PlaybackStatus.VDP_ID);
 		if(!playback.isPresent()) throw new IllegalStateException("playback must be present in VDP");
 		playback.get().addDataChangeListener(e -> ((PlaybackStatus)e.getData()).getCurrentMedia().ifPresent(m -> addToRecentlyUsed(m)));
@@ -45,7 +51,14 @@ public class MediaIndex {
 
 	public MediaInfo getInfo(RemoteFile file) {
 		if(file.isDirectory()) throw new IllegalArgumentException("directory not allowed");
-		else return new MediaInfo(file);
+		MediaInfo existing = infoMap.get(file);
+		if(existing != null) return existing;
+		else {
+			System.out.println("Creating new for "+file);
+			existing = new MediaInfo(file);
+			infoMap.put(file, existing);
+			return existing;
+		}
 	}
 
 	public MediaSet startSearch(MediaFilter filter) {
