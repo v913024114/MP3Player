@@ -157,11 +157,10 @@ public class LocalFile extends RemoteFile {
 				return false;
 		} else if (!relativePath.equals(other.relativePath))
 			return false;
-		if (root == null) {
-			if (other.root != null)
-				return false;
-		} else if (!root.equals(other.root))
-			return false;
+		if(!isRoot()) {
+			if(other.isRoot()) return false;
+			return root.equals(other.root);
+		}
 		return true;
 	}
 
