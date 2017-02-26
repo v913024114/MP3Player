@@ -7,8 +7,6 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import com.mp3player.vdp.internal.LocalPeer;
-
 /**
  * A file or directory mounted on any {@link Peer}.
  *
@@ -175,11 +173,21 @@ public abstract class RemoteFile {
 	/**
 	 * If this file is stored on the local machine, this method returns the
 	 * associated {@link File}. To test if a file is local, use
-	 * {@link LocalPeer#isLocal()} on the associated client.
+	 * {@link #isLocal()}.
 	 *
 	 * @return the associated File if available
 	 * @throws NoSuchElementException
 	 *             if this file is stored on a remote machine
 	 */
 	public abstract File localFile() throws NoSuchElementException;
+
+	/**
+	 * A file is local, it its associated peer is the local peer.
+	 *
+	 * @return if this file is stored locally
+	 * @see Peer#isLocal()
+	 */
+	public boolean isLocal() {
+		return getPeer().isLocal();
+	}
 }
