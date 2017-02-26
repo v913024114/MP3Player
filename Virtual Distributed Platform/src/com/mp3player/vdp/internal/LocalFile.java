@@ -19,7 +19,7 @@ public class LocalFile extends RemoteFile {
 
 	/**
 	 * If this file is not a root, this String represents
-	 * the relative path from the root.
+	 * the relative path including the root.
 	 * Else, this is the root's name.
 	 */
 	private String relativePath;
@@ -61,8 +61,7 @@ public class LocalFile extends RemoteFile {
 
 	@Override
 	public String getPath() {
-		if(isRoot()) return relativePath;
-		else return root.getName()+"/"+relativePath;
+		return relativePath;
 	}
 
 	@Override

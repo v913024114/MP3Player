@@ -50,7 +50,7 @@ public class LocalPeer implements Peer {
 		}
 		if(root == null) throw new IllegalArgumentException("Not found: "+path);
 		if(path.equals(rootName)) return root;
-		return LocalFile.createChild(root, path.substring(rootName.length()+1));
+		return LocalFile.createChild(root, path);
 	}
 
 	public RemoteFile mount(File file) {
