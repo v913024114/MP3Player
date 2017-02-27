@@ -48,7 +48,7 @@
                               <KeyCodeCombination alt="UP" code="TAB" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
                            </accelerator>
                         </MenuItem>
-                        <MenuItem mnemonicParsing="false" text="Manage library...">
+                        <MenuItem fx:id="settingsLibraryItem" mnemonicParsing="false" onAction="#showSettings" text="Manage library...">
                            <accelerator>
                               <KeyCodeCombination alt="UP" code="L" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
                            </accelerator></MenuItem>
@@ -60,7 +60,7 @@
                               <MenuItem mnemonicParsing="false" onAction="#setStyle" text="AquaFX" />
                           </items>
                         </Menu>
-                    <MenuItem mnemonicParsing="false" text="Settings...">
+                    <MenuItem fx:id="settingsGeneralItem" mnemonicParsing="false" onAction="#showSettings" text="Settings...">
                            <accelerator>
                               <KeyCodeCombination alt="UP" code="E" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
                            </accelerator></MenuItem>

@@ -70,10 +70,11 @@ public class PlayerWindow implements Initializable {
 	private Scene scene;
 	private Stage stage;
 	private StackPane root;
+	private SettingsWindow settings = null;
 
 	// Default
 	@FXML private Menu currentSongMenu, settingsMenu, addToLibraryMenu;
-	@FXML private MenuItem cannotAddToLibraryItem;
+	@FXML private MenuItem cannotAddToLibraryItem, settingsGeneralItem, settingsLibraryItem;
 	@FXML private MenuBar menuBar;
 	@FXML private Slider volume;
 	@FXML private ComboBox<Speaker> speakerSelection;
@@ -495,5 +496,18 @@ public class PlayerWindow implements Initializable {
     	}
     	status.getPlaylist().remove(current.get());
     	if(!hasNext) status.next();
+    }
+
+
+    @FXML
+    public void showSettings(ActionEvent e) {
+    	if(settings == null) {
+    		settings = new SettingsWindow(stage);
+    	}
+    	if(e.getTarget() == settingsGeneralItem)
+    		settings.showGeneralTab();
+    	if(e.getTarget() == settingsLibraryItem)
+    		settings.showLibraryTab();
+    	settings.show();
     }
 }

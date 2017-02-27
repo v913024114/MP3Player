@@ -146,7 +146,7 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 			if(getSkinnable().getOnShowPlaylist() != null)
 				getSkinnable().getOnShowPlaylist().handle(e);
 		});
-		listButton.setTooltip(new Tooltip("Show playlist"));
+		listButton.setTooltip(new Tooltip("Show playlist (Ctrl+Tab)"));
 
 		// Search
 		getChildren().add(searchButton = new Button(null, FXIcons.get("Search.png", 24, heightScale)));
@@ -154,7 +154,7 @@ public class RoundPlayerSkin extends SkinBase<PlayerControl>
 			if(getSkinnable().getOnSearch() != null)
 				getSkinnable().getOnSearch().handle(e);
 		});
-		searchButton.setTooltip(new Tooltip("Search for file or folder"));
+		searchButton.setTooltip(new Tooltip("Search for file or folder (Ctrl+Space)"));
 	}
 
 	private void layoutButtons(double rad) {
