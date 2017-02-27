@@ -80,12 +80,19 @@
               <menus>
                 <Menu fx:id="currentSongMenu" mnemonicParsing="false" text="Song title">
                   <items>
-                        <MenuItem mnemonicParsing="false" text="File information..." />
-                        <MenuItem mnemonicParsing="false" onAction="#openFileLocation" text="Open file location..." />
-                        <MenuItem mnemonicParsing="false" text="Add to library...">
+                        <MenuItem mnemonicParsing="false" text="File information...">
                            <accelerator>
-                              <KeyCodeCombination alt="UP" code="A" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
+                              <KeyCodeCombination alt="UP" code="I" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
                            </accelerator></MenuItem>
+                        <MenuItem mnemonicParsing="false" onAction="#openFileLocation" text="Open file location...">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="O" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
+                           </accelerator></MenuItem>
+                        <Menu fx:id="addToLibraryMenu" mnemonicParsing="false" text="Add to library">
+                          <items>
+                            <MenuItem fx:id="cannotAddToLibraryItem" disable="true" mnemonicParsing="false" text="Cannot add song to local library" />
+                          </items>
+                        </Menu>
                         <SeparatorMenuItem mnemonicParsing="false" />
                         <MenuItem mnemonicParsing="false" onAction="#removeCurrentFromPlaylist" text="Remove from playlist">
                            <accelerator>

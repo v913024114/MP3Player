@@ -36,13 +36,17 @@ public class Launcher extends Application {
 			setup(primaryStage);
 			play(appParams);
 		}
+		else {
+			// Parameters have been passed to the main instance
+			System.exit(0);
+		}
 	}
 
 	private void setup(Stage primaryStage) throws IOException, AudioEngineException {
 		VDP vdp = new VDP();
 
 		PlayerStatus status = new PlayerStatus(vdp);
-		MediaIndex index = new MediaIndex(vdp);
+		MediaIndex index = new MediaIndex(vdp, new File("index.jobjs"));
 
 		window = new PlayerWindow(status, index, primaryStage);
 		window.show();

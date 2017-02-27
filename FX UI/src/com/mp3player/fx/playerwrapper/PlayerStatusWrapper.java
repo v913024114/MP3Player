@@ -11,14 +11,18 @@ import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import com.mp3player.model.Identifier;
+import com.mp3player.model.MediaIndex;
+import com.mp3player.model.MediaInfo;
 import com.mp3player.player.status.MachineInfo;
 import com.mp3player.player.status.PlayerStatus;
 import com.mp3player.player.status.Speaker;
 import com.mp3player.vdp.DataEvent;
 import com.mp3player.vdp.DataListener;
 import com.mp3player.vdp.Distributed;
+import com.mp3player.vdp.VDP;
 
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -35,6 +39,7 @@ import javafx.collections.ObservableList;
 
 public class PlayerStatusWrapper {
 	private PlayerStatus status;
+	private MediaIndex index;
 
 	private String noMediaText = "No media selected.";
 
@@ -86,8 +91,8 @@ public class PlayerStatusWrapper {
 	public void setShuffled(boolean value) { shuffled.set(value); }
 	public BooleanProperty shuffledProperty() { return shuffled; }
 
-	private ObservableList<Identifier> playlist;
-	public ObservableList<Identifier> getPlaylist() { return playlist; }
+	private ObservableList<MediaInfo> playlist;
+	public ObservableList<MediaInfo> getPlaylist() { return playlist; }
 
 	private ObjectProperty<Optional<Identifier>> currentMedia;
 	public Optional<Identifier> getCurrentMedia() { return currentMedia.get(); }
@@ -104,8 +109,9 @@ public class PlayerStatusWrapper {
 
 
 
-	public PlayerStatusWrapper(PlayerStatus status) {
+	public PlayerStatusWrapper(PlayerStatus status, MediaIndex index) {
 		this.status = status;
+		this.index = index;
 
 		playing = new DistributedBooleanProperty("playing", this,
 				status.getPlayback(),
@@ -179,7 +185,11 @@ public class PlayerStatusWrapper {
 
 		playlist = FXCollections.observableArrayList();
 		status.getPlaylist().addDataChangeListener(e -> {
-			Platform.runLater(() -> playlist.setAll(status.getPlaylist().list()));
+			Platform.runLater(() -> playlist.setAll(status.getPlaylist().list().stream()
+					.map(id -> index.getInfo(id))
+					.filter(opMed -> opMed.isPresent())
+					.map(opMed -> opMed.get())
+					.collect(Collectors.toList())));
 		});
 
 		currentMedia = new DistributedObjectProperty<>("currentMedia", this,
@@ -217,6 +227,10 @@ public class PlayerStatusWrapper {
 
 	public PlayerStatus getStatus() {
 		return status;
+	}
+
+	public MediaIndex getIndex() {
+		return index;
 	}
 
 	public void stop() {
@@ -582,5 +596,9 @@ public class PlayerStatusWrapper {
 		public void set(T value) {
 			if(!lastValue.equals(value)) setter.accept(value);
 		}
+	}
+
+	public VDP getVdp() {
+		return status.getVdp();
 	}
 }

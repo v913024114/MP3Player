@@ -34,6 +34,8 @@ public class MediaIndexWrapper {
 		return new MediaSetWrapper(index.startSearch(filter));
 	}
 
-
+	public MediaSetWrapper startSearch(String pattern) {
+		return new MediaSetWrapper(index.startSearch(pattern));
+	}
 
 }

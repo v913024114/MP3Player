@@ -21,6 +21,8 @@ import com.mp3player.fx.playerwrapper.PlayerStatusWrapper;
 import com.mp3player.model.AudioFiles;
 import com.mp3player.model.Identifier;
 import com.mp3player.model.MediaIndex;
+import com.mp3player.model.MediaIndexEvent;
+import com.mp3player.model.MediaIndexListener;
 import com.mp3player.model.MediaInfo;
 import com.mp3player.player.status.PlayerStatus;
 import com.mp3player.player.status.Speaker;
@@ -70,7 +72,8 @@ public class PlayerWindow implements Initializable {
 	private StackPane root;
 
 	// Default
-	@FXML private Menu currentSongMenu, settingsMenu;
+	@FXML private Menu currentSongMenu, settingsMenu, addToLibraryMenu;
+	@FXML private MenuItem cannotAddToLibraryItem;
 	@FXML private MenuBar menuBar;
 	@FXML private Slider volume;
 	@FXML private ComboBox<Speaker> speakerSelection;
@@ -78,7 +81,7 @@ public class PlayerWindow implements Initializable {
 	// Playlist
 	private Pane playlistRoot;
 	@FXML private Button removeOthersButton;
-	@FXML private ListView<Identifier> playlist;
+	@FXML private ListView<MediaInfo> playlist;
 
 	// Search
 	private Pane searchRoot;
@@ -95,13 +98,25 @@ public class PlayerWindow implements Initializable {
 	public PlayerWindow(PlayerStatus status, MediaIndex index, Stage stage) throws IOException {
 		this.stage = stage;
 		this.status = status;
-		properties = new PlayerStatusWrapper(status);
+		properties = new PlayerStatusWrapper(status, index);
 		this.index = new MediaIndexWrapper(index);
 
 		root = new StackPane();
 		root.getChildren().add(loadPlayer());
 		playlistRoot = loadPlaylist();
 		searchRoot = loadSearch();
+
+		properties.currentMediaProperty().addListener((p,o,n) -> updateAddToLibraryMenu());
+		index.addMediaIndexListener(new MediaIndexListener() {
+			@Override
+			public void onRemoved(MediaIndexEvent e) {
+				updateAddToLibraryMenu();
+			}
+			@Override
+			public void onAdded(MediaIndexEvent e) {
+				updateAddToLibraryMenu();
+			}
+		});
 
 		FileDropOverlay overlay = new FileDropOverlay(root);
 		overlay.setActionGenerator(files -> generateDropButtons(files));
@@ -155,6 +170,95 @@ public class PlayerWindow implements Initializable {
 		return searchRoot;
 	}
 
+
+	@Override
+	public void initialize(URL location, ResourceBundle resources) {
+		if(playlist == null) {
+			// Initialize UI
+			settingsMenu.setText(null);
+			settingsMenu.setGraphic(FXIcons.get("Settings.png", 24));
+			currentSongMenu.setGraphic(FXIcons.get("Media.png", 24));
+			currentSongMenu.textProperty().bind(properties.titleProperty());
+			currentSongMenu.disableProperty().bind(properties.mediaSelectedProperty().not());
+			volume.valueProperty().bindBidirectional(properties.gainProperty());
+			speakerSelection.setItems(properties.getSpeakers());
+			speakerSelection.getSelectionModel().selectedItemProperty().addListener((p,o,n) -> {
+				if(n != null) properties.setSpeaker(Optional.of(n));
+			});
+			properties.speakerProperty().addListener((p,o,n) -> {
+				speakerSelection.getSelectionModel().select(n.orElse(null));
+			});
+		}
+		else if(searchField == null) {
+			// Initialize playlist view
+			playlist.setItems(properties.getPlaylist());
+			removeOthersButton.disableProperty().bind(properties.playlistAvailableProperty().not());
+			playlist.getSelectionModel().selectedItemProperty().addListener((p,o,n) -> {
+				if(n != null) properties.setCurrentMedia(Optional.of(n.getIdentifier()));
+			});
+			properties.currentMediaProperty().addListener((p,o,n) -> {
+				playlist.getSelectionModel().select(properties.getCurrentMedia().flatMap(m -> index.getIndex().getInfo(m)).orElse(null));
+			});
+			playlist.setOnMouseReleased(e -> {
+				if(e.getButton() == MouseButton.PRIMARY) {
+					Platform.runLater(() -> closePlaylist());
+				}
+			});
+			playlist.setCellFactory(list -> new MediaCell());
+		}
+		else {
+			// Initialize search view
+			searchField.textProperty().addListener((p,o,n) -> {
+				if(n.isEmpty()) {
+					searchResult.setItems(index.getRecentlyUsed().getItems());
+				} else {
+					searchResult.setItems(index.startSearch(n).getItems());
+				}
+				if(!searchResult.getItems().isEmpty()) searchResult.getSelectionModel().select(0);
+				searchResult.getItems().addListener((ListChangeListener<MediaInfo>) change -> {
+					if(!searchResult.getItems().isEmpty()) searchResult.getSelectionModel().select(0);
+				});
+			});
+			searchResult.setItems(index.getRecentlyUsed().getItems());
+			searchResult.setCellFactory(list -> new MediaCell());
+			searchResult.setOnKeyPressed(e -> {
+				if(e.getCode() == KeyCode.ENTER) {
+					MediaInfo m = searchResult.getSelectionModel().getSelectedItem();
+					if(m != null) {
+						playFromLibrary(m.getIdentifier(), e.isControlDown());
+					}
+					Platform.runLater(() -> closeSearch());
+				}
+			});
+			searchField.setOnKeyPressed(e -> {
+				if(e.getCode() == KeyCode.ENTER) {
+					MediaInfo m = searchResult.getSelectionModel().getSelectedItem();
+					if(m != null) {
+						playFromLibrary(m.getIdentifier(), e.isControlDown());
+					}
+					e.consume();
+					Platform.runLater(() -> closeSearch());
+				} else if(e.getCode() == KeyCode.DOWN) {
+					int next = searchResult.getSelectionModel().getSelectedIndex()+1;
+					if(searchResult.getItems().size() > next) searchResult.getSelectionModel().select(next);
+					e.consume();
+				} else if(e.getCode() == KeyCode.UP){
+					int prev = searchResult.getSelectionModel().getSelectedIndex() - 1;
+					if(prev >= 0) searchResult.getSelectionModel().select(prev);
+					e.consume();
+				}
+			});
+			searchResult.setOnMouseReleased(e -> {
+				if(e.getButton() == MouseButton.PRIMARY) {
+					MediaInfo m = searchResult.getSelectionModel().getSelectedItem();
+					if(m != null && (!properties.getCurrentMedia().isPresent() || !m.equals(properties.getCurrentMedia()))) {
+						playFromLibrary(m.getIdentifier(), e.isControlDown());
+					}
+					Platform.runLater(() -> closeSearch());
+				}
+			});
+		}
+	}
 
 	public PlayerStatusWrapper getStatusWrapper() {
 		return properties;
@@ -258,6 +362,33 @@ public class PlayerWindow implements Initializable {
 		fadeOut(searchRoot);
 	}
 
+	private void updateAddToLibraryMenu() {
+		addToLibraryMenu.getItems().clear();
+
+		Optional<RemoteFile> op = properties.getCurrentMedia().flatMap(id -> id.lookup(status.getVdp()));
+		if(op.isPresent() && op.get().localFile() != null) {
+			File file = op.get().localFile().getAbsoluteFile();
+			while(op.isPresent() && index.getIndex().isIndexed(op.get())) {
+				op = op.get().getParentFile();
+				file = file.getParentFile();
+			}
+			if(file != null) {
+				do {
+					File ffile = file;
+					MenuItem item = new MenuItem(file.getName().isEmpty() ? file.getAbsolutePath() : file.getName());
+					item.setGraphic(FXIcons.get(file.isDirectory() ? "PlayFolder.png" : "Media.png", 28) );
+					item.setOnAction(e -> index.getIndex().addLocalRoot(ffile));
+					addToLibraryMenu.getItems().add(item);
+					file = file.getParentFile();
+				} while(file != null);
+			}
+		}
+
+		if(addToLibraryMenu.getItems().isEmpty()) {
+			addToLibraryMenu.getItems().setAll(Arrays.asList(cannotAddToLibraryItem));
+		}
+	}
+
 
 	@FXML
 	public void setStyle(ActionEvent e) {
@@ -267,96 +398,6 @@ public class PlayerWindow implements Initializable {
 			AquaFx.style();
 		} else {
 			Application.setUserAgentStylesheet(text.toUpperCase());
-		}
-	}
-
-	@Override
-	public void initialize(URL location, ResourceBundle resources) {
-		if(playlist == null) {
-			// Initialize UI
-			settingsMenu.setText(null);
-			settingsMenu.setGraphic(FXIcons.get("Settings.png", 24));
-			currentSongMenu.setGraphic(FXIcons.get("Media.png", 24));
-			currentSongMenu.textProperty().bind(properties.titleProperty());
-			currentSongMenu.disableProperty().bind(properties.mediaSelectedProperty().not());
-			volume.valueProperty().bindBidirectional(properties.gainProperty());
-			speakerSelection.setItems(properties.getSpeakers());
-			speakerSelection.getSelectionModel().selectedItemProperty().addListener((p,o,n) -> {
-				if(n != null) properties.setSpeaker(Optional.of(n));
-			});
-			properties.speakerProperty().addListener((p,o,n) -> {
-				speakerSelection.getSelectionModel().select(n.orElse(null));
-			});
-		}
-		else if(searchField == null) {
-			// Initialize playlist view
-			playlist.setItems(properties.getPlaylist());
-			removeOthersButton.disableProperty().bind(properties.playlistAvailableProperty().not());
-			playlist.getSelectionModel().selectedItemProperty().addListener((p,o,n) -> {
-				if(n != null) properties.setCurrentMedia(Optional.of(n));
-			});
-			properties.currentMediaProperty().addListener((p,o,n) -> {
-				playlist.getSelectionModel().select(properties.getCurrentMedia().orElse(null));
-			});
-			playlist.setOnMouseReleased(e -> {
-				if(e.getButton() == MouseButton.PRIMARY) {
-					Platform.runLater(() -> closePlaylist());
-				}
-			});
-			playlist.setCellFactory(list -> new IdentifierCell());
-		}
-		else {
-			// Initialize search view
-			searchField.textProperty().addListener((p,o,n) -> {
-				if(n.isEmpty()) {
-					searchResult.setItems(index.getRecentlyUsed().getItems());
-				} else {
-					String lowerCase = n.toLowerCase();
-					searchResult.setItems(index.startSearch(media -> media.getRelativePath().toLowerCase().contains(lowerCase)).getItems());
-				}
-				if(!searchResult.getItems().isEmpty()) searchResult.getSelectionModel().select(0);
-				searchResult.getItems().addListener((ListChangeListener<MediaInfo>) change -> {
-					if(!searchResult.getItems().isEmpty()) searchResult.getSelectionModel().select(0);
-				});
-			});
-			searchResult.setItems(index.getRecentlyUsed().getItems());
-			searchResult.setCellFactory(list -> new MediaCell());
-			searchResult.setOnKeyPressed(e -> {
-				if(e.getCode() == KeyCode.ENTER) {
-					MediaInfo m = searchResult.getSelectionModel().getSelectedItem();
-					if(m != null) {
-						playFromLibrary(m.getIdentifier(), e.isControlDown());
-					}
-					Platform.runLater(() -> closeSearch());
-				}
-			});
-			searchField.setOnKeyPressed(e -> {
-				if(e.getCode() == KeyCode.ENTER) {
-					MediaInfo m = searchResult.getSelectionModel().getSelectedItem();
-					if(m != null) {
-						playFromLibrary(m.getIdentifier(), e.isControlDown());
-					}
-					e.consume();
-					Platform.runLater(() -> closeSearch());
-				} else if(e.getCode() == KeyCode.DOWN) {
-					int next = searchResult.getSelectionModel().getSelectedIndex()+1;
-					if(searchResult.getItems().size() > next) searchResult.getSelectionModel().select(next);
-					e.consume();
-				} else if(e.getCode() == KeyCode.UP){
-					int prev = searchResult.getSelectionModel().getSelectedIndex() - 1;
-					if(prev >= 0) searchResult.getSelectionModel().select(prev);
-					e.consume();
-				}
-			});
-			searchResult.setOnMouseReleased(e -> {
-				if(e.getButton() == MouseButton.PRIMARY) {
-					MediaInfo m = searchResult.getSelectionModel().getSelectedItem();
-					if(m != null && (!properties.getCurrentMedia().isPresent() || !m.equals(properties.getCurrentMedia()))) {
-						playFromLibrary(m.getIdentifier(), e.isControlDown());
-					}
-					Platform.runLater(() -> closeSearch());
-				}
-			});
 		}
 	}
 
@@ -376,16 +417,6 @@ public class PlayerWindow implements Initializable {
 		});
 	}
 
-	static class IdentifierCell extends ListCell<Identifier>
-	{
-		@Override
-		protected void updateItem(Identifier item, boolean empty) {
-			super.updateItem(item, empty);
-			if(item != null) {
-				setText(item.inferTitle());
-			} else setText(null);
-		}
-	}
 
 	static class MediaCell extends ListCell<MediaInfo>
 	{

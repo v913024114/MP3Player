@@ -60,4 +60,15 @@ public class MediaSet {
 			listeners.forEach(l -> l.onRemoved(e));
 		}
 	}
+
+
+	boolean contains(MediaInfo media) {
+		return list.contains(media);
+	}
+
+
+	// TODO slow, implement via private HashSet<Identifier>
+	public boolean contains(Identifier id) {
+		return list.stream().anyMatch(media -> media.getIdentifier().equals(id));
+	}
 }

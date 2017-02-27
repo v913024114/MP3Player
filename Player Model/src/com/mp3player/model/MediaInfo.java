@@ -47,6 +47,7 @@ public class MediaInfo implements Serializable {
 
 	private String machinePath;
 	private long modificationDate;
+	private boolean directory;
 
 	private Map<Property, Serializable> properties;
 	private Map<String, Serializable> customProperties;
@@ -57,9 +58,14 @@ public class MediaInfo implements Serializable {
 		media = new Identifier(file);
 		machinePath = file.getAbsolutePath();
 		modificationDate = file.lastModified();
+		directory = file.isDirectory();
 
 		properties = new HashMap<>();
 		customProperties = new HashMap<>();
+	}
+
+	public boolean isDirectory() {
+		return directory;
 	}
 
 	public Identifier getIdentifier() {
